@@ -10,7 +10,7 @@ import {
   PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_Y_RATIO,
   ROAD_L, ROAD_R,
   FOOTPRINT_SPAWN_MS, FOOTPRINT_SCORE,
-  WATER_BASE_SPEED, WATER_SPAWN_MS, POWER_SPEED_BOOST,
+  WATER_BASE_SPEED, WATER_SPAWN_MS, POWER_SPEED_BOOST, DISTANCE_SPEED,
   OBSTACLE_BASE_SPEED, OBSTACLE_SPAWN_MS,
   GAUGE_CAPACITY, POWER_DURATION, POWER_SCORE_MULT,
   SPEED_RAMP, MILESTONES,
@@ -176,7 +176,7 @@ export class GameEngine {
 
     // 거리 증가 + 거리 기반 점수
     const prevFloor = Math.floor(this.distanceMeters);
-    this.distanceMeters += sm * boost * dtSec;
+    this.distanceMeters += sm * boost * DISTANCE_SPEED * dtSec;
     let needsEmit = Math.floor(this.distanceMeters) !== prevFloor;
 
     while (this.distanceMeters >= this.nextDistanceScore) {

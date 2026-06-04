@@ -40,7 +40,7 @@ export const THEMES: GameTheme[] = [
     id: 'forest',
     emoji: '🌲',
     name: '숲길',
-    minDistance: 500,
+    minDistance: 150,
     decoration: 'trees',
     colors: {
       grassMain:   '#2D6A4F',
@@ -56,7 +56,7 @@ export const THEMES: GameTheme[] = [
     id: 'autumn',
     emoji: '🍁',
     name: '단풍길',
-    minDistance: 1000,
+    minDistance: 350,
     decoration: 'leaves',
     colors: {
       grassMain:   '#B5651D',
@@ -72,7 +72,7 @@ export const THEMES: GameTheme[] = [
     id: 'cherry',
     emoji: '🌸',
     name: '벚꽃길',
-    minDistance: 2000,
+    minDistance: 600,
     decoration: 'petals',
     colors: {
       grassMain:   '#F2A8C0',
@@ -88,7 +88,7 @@ export const THEMES: GameTheme[] = [
     id: 'snow',
     emoji: '❄️',
     name: '눈길',
-    minDistance: 3000,
+    minDistance: 1000,
     decoration: 'snow',
     colors: {
       grassMain:   '#A8C8E0',
@@ -104,7 +104,7 @@ export const THEMES: GameTheme[] = [
     id: 'mountain',
     emoji: '⛰️',
     name: '산길',
-    minDistance: 5000,
+    minDistance: 2000,
     decoration: 'rocks',
     colors: {
       grassMain:   '#6B7C5A',
