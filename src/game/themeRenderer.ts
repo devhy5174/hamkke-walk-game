@@ -50,6 +50,32 @@ export function renderBackground(rc: RenderCtx, theme: GameTheme): void {
     drawGrassTuft(ctx, pathLeft - 14, y);
     drawGrassTuft(ctx, rightEdge + 14, y);
   }
+
+  // ── 깊이감: 길 중앙 밝게 / 가장자리 어둡게 ──
+  const depthGrad = ctx.createLinearGradient(pathLeft, 0, pathLeft + pathWidth, 0);
+  depthGrad.addColorStop(0,    'rgba(0,0,0,0.07)');
+  depthGrad.addColorStop(0.18, 'rgba(0,0,0,0.02)');
+  depthGrad.addColorStop(0.5,  'rgba(255,255,255,0.05)');
+  depthGrad.addColorStop(0.82, 'rgba(0,0,0,0.02)');
+  depthGrad.addColorStop(1,    'rgba(0,0,0,0.07)');
+  ctx.fillStyle = depthGrad;
+  ctx.fillRect(pathLeft, 0, pathWidth, height);
+
+  // ── 흙길 질감: 작은 자갈/흙 입자 ──
+  const pebblePeriod = 38;
+  const world = Math.floor(scrollY / pebblePeriod);
+  for (let i = 0; i <= Math.ceil((height + pebblePeriod * 2) / pebblePeriod); i++) {
+    const slot = world + i;
+    const y = (scrollY % pebblePeriod) - pebblePeriod + i * pebblePeriod;
+    for (let j = 0; j < 5; j++) {
+      const px = pathLeft + 10 + Math.abs(Math.sin(slot * 1.9 + j * 2.3)) * (pathWidth - 20);
+      const pr = 1.2 + Math.abs(Math.sin(slot * 0.7 + j * 1.1)) * 1.4;
+      ctx.fillStyle = `rgba(120,90,55,${0.08 + Math.abs(Math.sin(slot * 2 + j)) * 0.07})`;
+      ctx.beginPath();
+      ctx.ellipse(px, y + j * 7, pr, pr * 0.55, Math.sin(slot + j) * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 }
 
 function drawGrassTuft(ctx: CanvasRenderingContext2D, cx: number, cy: number) {

@@ -240,13 +240,13 @@
 /* 3초 이하: 중앙 카운트다운 텍스트 */
 .power-warning-text {
   position: absolute;
-  bottom: 110px;
+  bottom: 180px;
   left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 9;
   white-space: nowrap;
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: rgba(255, 170, 60, 0.92);
   letter-spacing: 0.8px;

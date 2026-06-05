@@ -8,6 +8,8 @@ import { ThemeToast } from './components/ThemeToast';
 import { PowerOverlay } from './components/PowerOverlay';
 import { RecordsModal } from './components/RecordsModal';
 import { RankingModal } from './components/RankingModal';
+import { CharacterSelect } from './components/CharacterSelect';
+import { CHARACTERS, getSavedCharId, saveCharId } from './game/characters';
 import './App.css';
 
 function App() {
@@ -21,6 +23,22 @@ function App() {
 
   const [showRecords, setShowRecords] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
+  const [selectedCharId, setSelectedCharId] = useState(getSavedCharId());
+
+  const selectedChar = CHARACTERS.find(c => c.id === selectedCharId) ?? CHARACTERS[0];
+
+  const handleSelectChar = (id: string) => {
+    setSelectedCharId(id);
+    saveCharId(id);
+  };
+
+  const handleStart = () => {
+    startGame(selectedChar.src);
+  };
+
+  const handleRestart = () => {
+    startGame(selectedChar.src);
+  };
 
   return (
     <div className="app">
@@ -44,17 +62,30 @@ function App() {
       {!isStarted && (
         <div className="overlay">
           <div className="start-card">
-            <div style={{ fontSize: '3.2rem', marginBottom: 10 }}>🚶</div>
+            {/* 선택된 캐릭터 미리보기 */}
+            <div style={{
+              width: 80, height: 80, borderRadius: '50%',
+              overflow: 'hidden', margin: '0 auto 10px',
+              border: '3px solid #3DAE79',
+              boxShadow: '0 4px 16px rgba(61,174,121,0.25)',
+            }}>
+              <img src={selectedChar.src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+
             <h1 className="game-title">함께Walk</h1>
             <p className="game-desc">
               발자국을 모으고 물병으로<br />에너지를 충전해 보세요!
             </p>
+
+            {/* 캐릭터 선택 */}
+            <CharacterSelect selected={selectedCharId} onSelect={handleSelectChar} />
+
             <div className="hint-row">
               <span className="hint">🟡 발자국 수집 → 점수 획득</span>
               <span className="hint">💧 물병 10개 → 파워워커 발동</span>
               <span className="hint">🪨 돌·웅덩이 → 피하거나 무적으로!</span>
             </div>
-            <button className="btn-primary" onClick={startGame}>
+            <button className="btn-primary" onClick={handleStart}>
               걷기 시작 🌿
             </button>
             <button className="btn-secondary" onClick={() => setShowRecords(true)}>
@@ -69,7 +100,7 @@ function App() {
           score={score}
           bestScore={bestScore}
           distanceMeters={distanceMeters}
-          onRestart={startGame}
+          onRestart={handleRestart}
           onShowRecords={() => setShowRecords(true)}
           onShowRanking={() => setShowRanking(true)}
         />

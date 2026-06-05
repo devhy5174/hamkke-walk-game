@@ -5,20 +5,36 @@ import type {
   Obstacle,
   GameStats,
   Milestone,
-} from './types';
+} from "./types";
 import {
-  PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_Y_RATIO,
-  ROAD_L, ROAD_R,
-  FOOTPRINT_SPAWN_MS, FOOTPRINT_SCORE,
-  WATER_BASE_SPEED, WATER_SPAWN_MS, POWER_SPEED_BOOST, DISTANCE_SPEED,
-  OBSTACLE_BASE_SPEED, OBSTACLE_SPAWN_MS,
-  GAUGE_CAPACITY, POWER_DURATION, POWER_SCORE_MULT,
-  SPEED_RAMP, MILESTONES,
-} from './constants';
-import { makeFootprint, makeWaterBottle, makeObstacle } from './spawn';
-import { hitFootprint, hitWaterBottle, hitObstacle } from './collision';
-import { type GameTheme, THEMES, getThemeByDistance } from './themes';
-import { renderBackground, renderDecorations } from './themeRenderer';
+  PLAYER_WIDTH,
+  PLAYER_HEIGHT,
+  PLAYER_SPEED,
+  PLAYER_Y_RATIO,
+  ROAD_L,
+  ROAD_R,
+  FOOTPRINT_SPAWN_MS,
+  FOOTPRINT_SCORE,
+  WATER_BASE_SPEED,
+  WATER_SPAWN_MS,
+  POWER_SPEED_BOOST,
+  DISTANCE_SPEED,
+  OBSTACLE_BASE_SPEED,
+  OBSTACLE_SPAWN_MS,
+  GAUGE_CAPACITY,
+  POWER_DURATION,
+  POWER_SCORE_MULT,
+  SPEED_RAMP,
+  MILESTONES,
+} from "./constants";
+import { makeFootprint, makeWaterBottle, makeObstacle } from "./spawn";
+import { hitFootprint, hitWaterBottle, hitObstacle } from "./collision";
+import { type GameTheme, THEMES, getThemeByDistance } from "./themes";
+import { renderBackground, renderDecorations } from "./themeRenderer";
+import footprintSrc from "../assets/images/item-footprint.png";
+import waterBottleSrc from "../assets/images/item-water-bottle.png";
+import rockSrc from "../assets/images/obstacle-rock.png";
+import puddleSrc from "../assets/images/obstacle-puddle.png";
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -51,6 +67,26 @@ export class GameEngine {
   touchX: number | null = null;
   moveDx = 0;
 
+  private characterImg: HTMLImageElement | null = null;
+  private readonly footprintImg = GameEngine.loadImg(footprintSrc);
+  private readonly waterBottleImg = GameEngine.loadImg(waterBottleSrc);
+  private readonly rockImg = GameEngine.loadImg(rockSrc);
+  private readonly puddleImg = GameEngine.loadImg(puddleSrc);
+
+  private static loadImg(src: string): HTMLImageElement {
+    const img = new Image();
+    img.src = src;
+    return img;
+  }
+
+  setCharacter(src: string): void {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+      this.characterImg = img;
+    };
+  }
+
   private onUpdate: (stats: GameStats) => void;
   private onGameOver: () => void;
   private onMilestone: (m: Milestone) => void;
@@ -64,7 +100,7 @@ export class GameEngine {
     onThemeChange: (theme: GameTheme) => void,
   ) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
+    this.ctx = canvas.getContext("2d")!;
     this.onUpdate = onUpdate;
     this.onGameOver = onGameOver;
     this.onMilestone = onMilestone;
@@ -280,7 +316,16 @@ export class GameEngine {
     const pathLeft = width * ROAD_L;
     const pathWidth = width * (ROAD_R - ROAD_L);
     const theme = getThemeByDistance(this.distanceMeters);
-    const rc = { ctx, width, height, pathLeft, pathWidth, isPowerMode: this.isPowerMode, scrollY: this.scrollY, aliveTime: this.aliveTime };
+    const rc = {
+      ctx,
+      width,
+      height,
+      pathLeft,
+      pathWidth,
+      isPowerMode: this.isPowerMode,
+      scrollY: this.scrollY,
+      aliveTime: this.aliveTime,
+    };
 
     // ── 배경 + 장식 (테마별 렌더링) ──
     renderBackground(rc, theme);
@@ -308,31 +353,66 @@ export class GameEngine {
       this.drawFlameEffect();
     }
 
-    // ── 플레이어 🚶 ──
+    // ── 플레이어 (원형 캐릭터 이미지) ──
     const { player: p } = this;
     const bob = this.running ? Math.sin(this.aliveTime * 10) * 2.5 : 0;
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.28)";
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 3;
-    ctx.font = `${p.height + 8}px serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText("🚶", p.x + p.width / 2, p.y + bob - 4);
-    ctx.restore();
+    const r = ((p.height + 8) / 2) * 1.13; // 13% 크기 증가
+    const cx = p.x + p.width / 2;
+    const cy = p.y + bob - 4 + r;
 
-    // ── 파워모드 캔버스 비네트 (모든 요소 위에 덮기) ──
+    if (this.characterImg?.complete && this.characterImg.naturalWidth > 0) {
+      // 바닥 그림자 타원
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.15)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r * 0.92, r * 0.78, r * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      // 흰 외곽 링 (두껍게)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0,0,0,0.28)";
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 4;
+      ctx.fill();
+      ctx.restore();
+      // 원형 클리핑 후 이미지
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(this.characterImg, cx - r, cy - r, r * 2, r * 2);
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.28)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+      ctx.font = `${p.height + 8}px serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("🚶", cx, p.y + bob - 4);
+      ctx.restore();
+    }
+
+    // ── 파워모드 캔버스 비네트 (민트/수분 느낌) ──
     if (this.isPowerMode) {
       const { width, height } = canvas;
       const t = this.aliveTime;
-      const pulse = 0.22 + Math.sin(t * 5) * 0.07;
-      const intensity = this.powerTimeLeft <= 3 ? pulse * 1.7 : pulse;
+      const pulse = 0.18 + Math.sin(t * 5) * 0.06;
+      const intensity = this.powerTimeLeft <= 3 ? pulse * 1.8 : pulse;
       const grad = ctx.createRadialGradient(
-        width / 2, height / 2, height * 0.2,
-        width / 2, height / 2, height * 0.9,
+        width / 2,
+        height / 2,
+        height * 0.25,
+        width / 2,
+        height / 2,
+        height * 0.9,
       );
-      grad.addColorStop(0, 'rgba(255,160,0,0)');
-      grad.addColorStop(1, `rgba(255,80,0,${intensity})`);
+      grad.addColorStop(0, "rgba(0,180,200,0)");
+      grad.addColorStop(1, `rgba(0,140,180,${intensity})`);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
     }
@@ -340,63 +420,77 @@ export class GameEngine {
 
   private drawFlameEffect() {
     const { ctx, player: p } = this;
-    const cx = p.x + p.width / 2;
-    const cy = p.y + p.height / 2;
     const t = this.aliveTime;
+    // 캐릭터와 동일한 중심/반지름 계산
+    const charR = ((p.height + 8) / 2) * 1.13;
+    const cx = p.x + p.width / 2;
+    const cy = p.y - 4 + charR + (this.running ? Math.sin(t * 10) * 2.5 : 0);
+    const orbitR = charR + 16; // 캐릭터 외곽 바로 밖
 
-    // 외곽 글로우
+    // 민트 글로우 링
     ctx.save();
-    ctx.globalAlpha = 0.35 + Math.sin(t * 6) * 0.08;
+    ctx.globalAlpha = 0.18 + Math.sin(t * 4) * 0.06;
     ctx.beginPath();
-    ctx.arc(cx, cy, 38, 0, Math.PI * 2);
-    ctx.fillStyle = "#FF6F00";
+    ctx.arc(cx, cy, orbitR + 6, 0, Math.PI * 2);
+    ctx.fillStyle = "#00BCD4";
     ctx.fill();
     ctx.restore();
 
-    // 궤도를 도는 불꽃 파티클
+    // 궤도 링 (점선 느낌)
+    ctx.save();
+    ctx.globalAlpha = 0.3 + Math.sin(t * 3) * 0.08;
+    ctx.strokeStyle = "rgba(100,220,240,0.7)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 8]);
+    ctx.lineDashOffset = -t * 30;
+    ctx.beginPath();
+    ctx.arc(cx, cy, orbitR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // 물방울 오브 6개
     for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2 + t * 4;
-      const r = 28 + Math.sin(t * 8 + i * 1.2) * 4;
-      const fx = cx + Math.cos(angle) * r;
-      const fy = cy + Math.sin(angle) * r;
-      const size = 7 + Math.sin(t * 10 + i) * 2;
+      const angle = (i / 6) * Math.PI * 2 + t * 2.8;
+      const ox = cx + Math.cos(angle) * orbitR;
+      const oy = cy + Math.sin(angle) * orbitR;
+      const size = 6 + Math.sin(t * 5 + i * 1.4) * 1.5;
+      const isBlue = i % 2 === 0;
+
+      // 물방울 본체
+      ctx.save();
+      ctx.shadowColor = isBlue ? "rgba(33,150,243,0.7)" : "rgba(0,188,212,0.7)";
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = isBlue ? "rgba(66,165,245,0.92)" : "rgba(0,188,212,0.88)";
       ctx.beginPath();
-      ctx.arc(fx, fy, size, 0, Math.PI * 2);
-      ctx.fillStyle =
-        i % 2 === 0 ? "rgba(255, 220, 0, 0.9)" : "rgba(255, 110, 0, 0.85)";
+      ctx.arc(ox, oy, size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+
+      // 물방울 하이라이트
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.beginPath();
+      ctx.arc(ox - size * 0.28, oy - size * 0.28, size * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
   }
 
-
   private drawFootprint(cx: number, cy: number, r: number) {
     const { ctx } = this;
-    // 황금 원
+    // 어두운 테마(숲길 등)에서도 구분되도록 연한 글로우
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,235,200,0.22)';
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = "#FFD700";
+    ctx.arc(cx, cy, r * 0.92, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#FF8F00";
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    // 발 모양 힌트: 상단 작은 원 3개
-    ctx.fillStyle = "#FF8F00";
-    for (let i = 0; i < 3; i++) {
-      const a = -Math.PI / 2 + (i - 1) * 0.55;
-      ctx.beginPath();
-      ctx.arc(
-        cx + Math.cos(a) * r * 0.62,
-        cy + Math.sin(a) * r * 0.62,
-        r * 0.22,
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
-    }
-    // 중앙 발바닥 타원
-    ctx.beginPath();
-    ctx.ellipse(cx, cy + r * 0.1, r * 0.38, r * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.restore();
+    // 갈색 발자국 (brightness 높여서 어두운 배경에서도 보임)
+    ctx.save();
+    ctx.filter = 'sepia(1) saturate(2) brightness(0.58)';
+    ctx.drawImage(this.footprintImg, cx - r, cy - r, r * 2, r * 2);
+    ctx.restore();
   }
 
   private drawWaterBottle(cx: number, cy: number, r: number) {
@@ -405,68 +499,93 @@ export class GameEngine {
       bh = r * 2.5;
     const bx = cx - bw / 2,
       by = cy - bh / 2;
-    ctx.fillStyle = "#0D47A1";
+    // 바닥 그림자
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.1)";
     ctx.beginPath();
-    ctx.roundRect(bx + bw * 0.18, by, bw * 0.64, bh * 0.22, 3);
+    ctx.ellipse(cx + 1, by + bh + 2, bw * 0.38, bh * 0.05, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#90CAF9";
+    ctx.restore();
+    // 이미지
+    ctx.save();
+    ctx.shadowColor = "rgba(0,60,160,0.18)";
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 2;
+    ctx.drawImage(this.waterBottleImg, bx, by, bw, bh);
+    ctx.restore();
+    // 유리 반짝임 강화
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
     ctx.beginPath();
-    ctx.roundRect(bx, by + bh * 0.2, bw, bh * 0.8, 5);
+    ctx.roundRect(bx + bw * 0.3, by + bh * 0.3, bw * 0.13, bh * 0.32, 3);
     ctx.fill();
-    ctx.fillStyle = "#42A5F5";
+    ctx.fillStyle = "rgba(255,255,255,0.38)";
     ctx.beginPath();
-    ctx.roundRect(bx + 2, by + bh * 0.55, bw - 4, bh * 0.42, 4);
+    ctx.roundRect(bx + bw * 0.31, by + bh * 0.34, bw * 0.07, bh * 0.16, 2);
     ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.45)";
-    ctx.beginPath();
-    ctx.roundRect(bx + bw * 0.14, by + bh * 0.25, bw * 0.22, bh * 0.38, 2);
-    ctx.fill();
+    ctx.restore();
   }
 
   private drawRock(x: number, y: number, w: number, h: number) {
     const { ctx } = this;
     const cx = x + w / 2,
       cy = y + h / 2;
-    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.drawImage(this.rockImg, x, y, w, h);
+    // 상단 하이라이트
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
     ctx.beginPath();
-    ctx.ellipse(cx + 3, cy + 5, w / 2.1, h / 2.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(
+      cx - w * 0.18,
+      cy - h * 0.2,
+      w * 0.18,
+      h * 0.14,
+      -0.5,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
-    ctx.fillStyle = "#78909C";
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#B0BEC5";
-    ctx.beginPath();
-    ctx.ellipse(cx - 5, cy - 5, w / 4.5, h / 4.5, -0.6, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.restore();
   }
 
   private drawPuddle(x: number, y: number, w: number, h: number) {
     const { ctx } = this;
     const cx = x + w / 2,
-      cy = y + h / 2,
-      rx = w / 2,
+      cy = y + h / 2;
+    const rx = w / 2,
       ry = h / 2;
-    ctx.fillStyle = "#5C9CB5";
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    // 이미지 (채도 증가) — 웅덩이는 바닥 자체라 그림자/외곽선 없음
+    ctx.save();
+    ctx.filter = "saturate(1.9) brightness(1.08)";
+    ctx.drawImage(this.puddleImg, x, y, w, h);
+    ctx.restore();
+    // 물 반짝임
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.48)";
     ctx.beginPath();
     ctx.ellipse(
-      cx - rx * 0.25,
-      cy - ry * 0.2,
-      rx * 0.28,
+      cx - rx * 0.22,
+      cy - ry * 0.18,
+      rx * 0.24,
       ry * 0.32,
       -0.3,
       0,
       Math.PI * 2,
     );
     ctx.fill();
-    ctx.strokeStyle = "#3D7A96";
-    ctx.lineWidth = 1.5;
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
     ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.ellipse(
+      cx + rx * 0.18,
+      cy + ry * 0.08,
+      rx * 0.1,
+      ry * 0.18,
+      0.2,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.restore();
   }
 }

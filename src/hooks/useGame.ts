@@ -4,6 +4,7 @@ import { GameEngine } from '../game/GameEngine';
 import type { GameStats, Milestone } from '../game/types';
 import { type GameTheme, THEMES } from '../game/themes';
 import { saveRecord } from '../utils/records';
+import { audioManager } from '../utils/audio';
 
 export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const engineRef = useRef<GameEngine | null>(null);
@@ -39,6 +40,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     const finalDist = distanceRef.current;
     setBestScore(prev => Math.max(prev, finalScore));
     setGameOver(true);
+    audioManager.stopBGM();
     if (finalScore > 0) {
       saveRecord({ score: finalScore, distanceMeters: finalDist, date: new Date().toISOString() });
     }
@@ -63,7 +65,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     }, 2800);
   }, []);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((charSrc?: string) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -75,6 +77,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
 
     engineRef.current?.stop();
     engineRef.current = new GameEngine(canvas, handleUpdate, handleGameOver, handleMilestone, handleThemeChange);
+    if (charSrc) engineRef.current.setCharacter(charSrc);
 
     scoreRef.current = 0;
     setScore(0);
@@ -85,6 +88,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     setGameOver(false);
     setIsStarted(true);
     engineRef.current.start();
+    audioManager.playBGM();
   }, [canvasRef, handleUpdate, handleGameOver, handleMilestone, handleThemeChange]);
 
   return {
