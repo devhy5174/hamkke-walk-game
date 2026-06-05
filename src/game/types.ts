@@ -34,7 +34,7 @@ export interface Obstacle {
   height: number;
   variant: 'rock' | 'puddle';
   style?: 'dodger';
-  dodgerType?: 'squirrel' | 'hiker';
+  dodgerType?: 'squirrel' | 'hiker' | 'panda';
   driftVx?: number;
   noticed?: boolean;
   noticedAt?: number;

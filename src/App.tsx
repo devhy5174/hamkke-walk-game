@@ -94,7 +94,9 @@ function App() {
           <div className="start-card">
             <h1 className="game-title">함께Walk</h1>
             <p className="game-desc">
-              발자국을 모으고 물병으로 에너지를 충전하며<br />6개의 테마 산책길을 달려보세요!
+              발자국을 모으고 물병으로 에너지를 충전하며
+              <br />
+              6개의 테마 산책길을 달려보세요!
             </p>
 
             {/* 캐릭터 선택 */}
@@ -105,7 +107,9 @@ function App() {
 
             <div className="hint-row">
               <span className="hint">🟡 발자국 수집 → +10점</span>
-              <span className="hint">💧 물병 10개 → 파워워커 발동 (무적+2배)</span>
+              <span className="hint">
+                💧 물병 10개 → 파워워커 발동 (무적+2배)
+              </span>
               <span className="hint">⏱️ 시계 → 6초간 속도 절반으로</span>
               <span className="hint">🪨 돌·동물·사람 → 피하세요!</span>
             </div>
@@ -180,7 +184,10 @@ function App() {
           distanceMeters={distanceMeters}
           onRestart={handleRestart}
           onShowRanking={() => setShowRanking(true)}
-          onGoHome={() => { engineRef.current?.stop(); window.location.reload(); }}
+          onGoHome={() => {
+            engineRef.current?.stop();
+            window.location.reload();
+          }}
         />
       )}
 
@@ -196,10 +203,7 @@ function App() {
         />
       )}
       {showRankingViewOnly && (
-        <RankingModal
-          viewOnly
-          onClose={() => setShowRankingViewOnly(false)}
-        />
+        <RankingModal viewOnly onClose={() => setShowRankingViewOnly(false)} />
       )}
     </div>
   );

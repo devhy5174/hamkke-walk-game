@@ -1,4 +1,4 @@
-export type DecoType = 'flowers' | 'trees' | 'leaves' | 'petals' | 'snow' | 'rocks';
+export type DecoType = 'flowers' | 'trees' | 'leaves' | 'petals' | 'snow' | 'bamboo' | 'stars';
 
 export interface ThemeColors {
   grassMain: string;
@@ -101,19 +101,35 @@ export const THEMES: GameTheme[] = [
     },
   },
   {
-    id: 'mountain',
-    emoji: '⛰️',
-    name: '산길',
-    minDistance: 2000,
-    decoration: 'rocks',
+    id: 'bamboo',
+    emoji: '🎋',
+    name: '대나무숲길',
+    minDistance: 1500,
+    decoration: 'bamboo',
     colors: {
-      grassMain:   '#6B7C5A',
-      grassInner:  '#8B9C6A',
-      pathBase:    '#A09070',
-      pathPower:   '#B8A880',
-      pathEdge:    '#706050',
-      stepPattern: 'rgba(90,70,40,0.3)',
-      tuft:        '#4A5C38',
+      grassMain:   '#2E5E2E',
+      grassInner:  '#1E4A1E',
+      pathBase:    '#C8AA7A',
+      pathPower:   '#D8BA8A',
+      pathEdge:    '#8A6A3A',
+      stepPattern: 'rgba(90,60,20,0.28)',
+      tuft:        '#1A4A1A',
+    },
+  },
+  {
+    id: 'moonlight',
+    emoji: '🌙',
+    name: '달빛길',
+    minDistance: 2000,
+    decoration: 'stars',
+    colors: {
+      grassMain:   '#0F0F2E',
+      grassInner:  '#1A1A4A',
+      pathBase:    '#1E1E3A',
+      pathPower:   '#2E2E5A',
+      pathEdge:    '#0A0A20',
+      stepPattern: 'rgba(160,160,255,0.18)',
+      tuft:        '#3A3A6A',
     },
   },
 ];

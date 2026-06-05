@@ -6,6 +6,8 @@ import { ROAD_L, ROAD_R } from '../game/constants';
 import { renderBackground, renderDecorations } from '../game/themeRenderer';
 import { getUnlockedThemes } from '../utils/themeCollection';
 
+import footprintSrc from '../assets/images/item-footprint.png';
+
 // 테마별 장애물 이미지 소스
 import obsParRock   from '../assets/images/obstacles/obs-park-rock.png';
 import obsParPuddle from '../assets/images/obstacles/obs-park-puddle.png';
@@ -19,21 +21,24 @@ import obsMtnRock   from '../assets/images/obstacles/obs-mountain-rock.png';
 const ROCK_SRCS: Record<string, string> = {
   park: obsParRock, forest: obsForRock,
   autumn: obsParRock, cherry: obsParRock,
-  snow: obsParRock, mountain: obsForRock,
+  snow: obsParRock, bamboo: obsForRock,
+  moonlight: obsForRock,
 };
 const PUDDLE_SRCS: Record<string, string> = {
   park: obsParPuddle, forest: obsForPuddle,
   autumn: obsAutRock, cherry: obsCheRock,
-  snow: obsSnoRock, mountain: obsMtnRock,
+  snow: obsSnoRock, bamboo: obsMtnRock,
+  moonlight: obsMtnRock,
 };
 
 const DESCRIPTIONS: Record<string, string> = {
-  park:     '상쾌한 공기, 꽃과 잔디 위를 걸어요',
-  forest:   '피톤치드 가득한 초록 숲 산책',
-  autumn:   '바스락바스락 단풍잎이 쌓인 길',
-  cherry:   '분홍빛 꽃잎이 날리는 봄길',
-  snow:     '하얀 눈밭 위에 발자국을 남겨요',
-  mountain: '정상을 향한 마지막 도전!',
+  park:      '상쾌한 공기, 꽃과 잔디 위를 걸어요',
+  forest:    '피톤치드 가득한 초록 숲 산책',
+  autumn:    '바스락바스락 단풍잎이 쌓인 길',
+  cherry:    '분홍빛 꽃잎이 날리는 봄길',
+  snow:      '하얀 눈밭 위에 발자국을 남겨요',
+  bamboo:    '대나무 사이로 살랑이는 잎이 날리는 고요한 숲길',
+  moonlight: '별빛 아래 황금 발자국만 빛나는 보상 구간. 여기까지 온 당신, 대단해요! ✨',
 };
 
 function rangeText(i: number) {
@@ -63,6 +68,14 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
     const puddleImg = new Image();
     rockImg.src = ROCK_SRCS[theme.id];
     puddleImg.src = PUDDLE_SRCS[theme.id];
+    // 숲·대나무: 정적 웅덩이는 공원 웅덩이 사용
+    const parkPuddleImg = new Image();
+    parkPuddleImg.src = PUDDLE_SRCS['park'];
+
+    // 달빛길 황금 발자국
+    const footprintImg = new Image();
+    footprintImg.src = footprintSrc;
+    let goldenFpCanvas: HTMLCanvasElement | null = null;
 
     let scrollY = 0;
     let aliveTime = 0;
@@ -82,18 +95,74 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
       renderBackground(rc, theme);
       renderDecorations(rc, theme);
 
-      // 장애물 오버레이 (이미지 로드 후)
-      if (rockImg.complete && rockImg.naturalWidth) {
-        ctx.save();
-        ctx.filter = 'saturate(1.4) contrast(1.1)';
-        ctx.drawImage(rockImg, pathLeft + 12, h * 0.52, 50, 54);
-        ctx.restore();
-      }
-      if (puddleImg.complete && puddleImg.naturalWidth) {
-        ctx.save();
-        ctx.filter = 'saturate(1.5) contrast(1.1)';
-        ctx.drawImage(puddleImg, pathLeft + pathWidth - 72, h * 0.42, 60, 60);
-        ctx.restore();
+      // 달빛길: 황금 발자국 이미지 오버레이
+      if (theme.id === 'moonlight') {
+        if (footprintImg.complete && footprintImg.naturalWidth) {
+          if (!goldenFpCanvas) {
+            goldenFpCanvas = document.createElement('canvas');
+            goldenFpCanvas.width = 128; goldenFpCanvas.height = 128;
+            const gc = goldenFpCanvas.getContext('2d')!;
+            gc.drawImage(footprintImg, 0, 0, 128, 128);
+            const imgData = gc.getImageData(0, 0, 128, 128);
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+              if (d[i + 3] > 20) { d[i] = 212; d[i + 1] = 175; d[i + 2] = 55; }
+            }
+            gc.putImageData(imgData, 0, 0);
+          }
+          const positions = [
+            { x: pathLeft + pathWidth * 0.25, y: h * 0.3 },
+            { x: pathLeft + pathWidth * 0.65, y: h * 0.52 },
+            { x: pathLeft + pathWidth * 0.4,  y: h * 0.72 },
+          ];
+          positions.forEach(({ x, y }, idx) => {
+            const pulse = 0.7 + Math.abs(Math.sin(aliveTime * 2.5 + idx * 1.3)) * 0.3;
+            const r = 20;
+            ctx.save();
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 20 * pulse;
+            ctx.globalAlpha = pulse;
+            ctx.drawImage(goldenFpCanvas!, x - r, y - r, r * 2, r * 2);
+            ctx.restore();
+          });
+        }
+      } else {
+        // 장애물 오버레이 (이미지 로드 후)
+        // 대나무: 죽순🎍 + 돌맹이 나란히
+        if (theme.id === 'bamboo') {
+          ctx.save();
+          ctx.font = `50px serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = 'rgba(40,40,40,0.4)';
+          ctx.shadowBlur = 6;
+          ctx.fillText('🎍', pathLeft + 24, h * 0.52);
+          ctx.restore();
+          if (rockImg.complete && rockImg.naturalWidth) {
+            ctx.save();
+            ctx.filter = 'saturate(1.4) contrast(1.1)';
+            ctx.drawImage(rockImg, pathLeft + pathWidth * 0.45, h * 0.62, 44, 48);
+            ctx.restore();
+          }
+        } else if (rockImg.complete && rockImg.naturalWidth) {
+          ctx.save();
+          ctx.filter = 'saturate(1.4) contrast(1.1)';
+          ctx.drawImage(rockImg, pathLeft + 12, h * 0.52, 50, 54);
+          ctx.restore();
+        }
+        if (puddleImg.complete && puddleImg.naturalWidth) {
+          ctx.save();
+          ctx.filter = 'saturate(1.5) contrast(1.1)';
+          ctx.drawImage(puddleImg, pathLeft + pathWidth - 72, h * 0.42, 60, 60);
+          ctx.restore();
+        }
+        // 숲: 정적 웅덩이도 표시
+        if (theme.id === 'forest' && parkPuddleImg.complete && parkPuddleImg.naturalWidth) {
+          ctx.save();
+          ctx.filter = 'saturate(1.4) contrast(1.1)';
+          ctx.drawImage(parkPuddleImg, pathLeft + pathWidth * 0.4, h * 0.68, 58, 44);
+          ctx.restore();
+        }
       }
 
       rafId = requestAnimationFrame(draw);
@@ -163,17 +232,18 @@ export function ThemeCollectionModal({ onClose }: Props) {
           <div style={grid}>
             {THEMES.map((theme, i) => {
               const isUnlocked = unlocked.includes(theme.id);
+              const isBonus = theme.id === 'moonlight';
               return (
                 <div
                   key={theme.id}
-                  style={isUnlocked ? gridItemUnlocked : gridItemLocked}
+                  style={isUnlocked ? (isBonus ? gridItemBonus : gridItemUnlocked) : (isBonus ? gridItemBonusLocked : gridItemLocked)}
                   onClick={isUnlocked ? () => setSelected({ theme, index: i }) : undefined}
                 >
-                  <span style={{ fontSize: 28 }}>{isUnlocked ? theme.emoji : '🔒'}</span>
-                  <div style={gridName(isUnlocked)}>
-                    {isUnlocked ? theme.name : '미방문'}
+                  <span style={{ fontSize: 28 }}>{isUnlocked ? theme.emoji : isBonus ? '✨' : '🔒'}</span>
+                  <div style={gridName(isUnlocked, isBonus)}>
+                    {isUnlocked ? theme.name : isBonus ? '보너스 구간' : '미방문'}
                   </div>
-                  <div style={gridRange}>
+                  <div style={{ ...gridRange, color: isBonus && !isUnlocked ? '#C8A000' : undefined }}>
                     {isUnlocked ? rangeText(i) : `${theme.minDistance}m~`}
                   </div>
                 </div>
@@ -243,9 +313,16 @@ const gridItemLocked: CSSProperties = {
   ...baseGridItem, background: '#F8F8F8', border: '1.5px solid #EBEBEB',
   opacity: 0.6, cursor: 'default',
 };
-const gridName = (unlocked: boolean): CSSProperties => ({
+const gridItemBonus: CSSProperties = {
+  ...baseGridItem, background: '#FFFBEA', border: '1.5px solid #FFD700',
+};
+const gridItemBonusLocked: CSSProperties = {
+  ...baseGridItem, background: '#FFFBEA', border: '1.5px dashed #FFD700',
+  cursor: 'default',
+};
+const gridName = (unlocked: boolean, bonus = false): CSSProperties => ({
   fontSize: 11, fontWeight: 700, marginTop: 6,
-  color: unlocked ? '#2D7D52' : '#B0B0B0',
+  color: bonus ? '#B8860B' : unlocked ? '#2D7D52' : '#B0B0B0',
 });
 const gridRange: CSSProperties = { fontSize: 9, color: '#A0B4AC', marginTop: 2 };
 
