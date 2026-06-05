@@ -91,29 +91,9 @@ function App() {
       {!isStarted && (
         <div className="overlay">
           <div className="start-card">
-            {/* 선택된 캐릭터 미리보기 */}
-            <div
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
-                overflow: "hidden",
-                margin: "0 auto 10px",
-                border: "3px solid #3DAE79",
-                boxShadow: "0 4px 16px rgba(61,174,121,0.25)",
-              }}
-            >
-              <img
-                src={selectedChar.src}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
-
             <h1 className="game-title">함께Walk</h1>
             <p className="game-desc">
-              발자국을 모으고 물병으로
-              <br />
-              에너지를 충전해 보세요!
+              발자국을 모으고 물병으로 에너지를 충전하며<br />6개의 테마 산책길을 달려보세요!
             </p>
 
             {/* 캐릭터 선택 */}
@@ -123,9 +103,10 @@ function App() {
             />
 
             <div className="hint-row">
-              <span className="hint">🟡 발자국 수집 → 점수 획득</span>
-              <span className="hint">💧 물병 10개 → 파워워커 발동</span>
-              <span className="hint">🪨 돌·웅덩이 → 피하거나 무적으로!</span>
+              <span className="hint">🟡 발자국 수집 → +10점</span>
+              <span className="hint">💧 물병 10개 → 파워워커 발동 (무적+2배)</span>
+              <span className="hint">⏱️ 시계 → 6초간 속도 절반으로</span>
+              <span className="hint">🪨 돌·동물·사람 → 피하세요!</span>
             </div>
             <button className="btn-primary" onClick={handleStart}>
               걷기 시작 🌿
@@ -199,6 +180,7 @@ function App() {
           onRestart={handleRestart}
           onShowRecords={() => setShowRecords(true)}
           onShowRanking={() => setShowRanking(true)}
+          onGoHome={() => { engineRef.current?.stop(); window.location.reload(); }}
         />
       )}
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import { submitRanking, getTopRankings, isNicknameAvailable, getSavedNickname, persistNickname } from '../utils/ranking';
+import { upsertRanking, getTopRankings, getSavedNickname, persistNickname } from '../utils/ranking';
 import type { RankEntry } from '../utils/ranking';
 import { hasProfanity } from '../utils/profanity';
 
@@ -36,15 +36,8 @@ export function RankingModal({ score, distanceMeters, onClose }: Props) {
     setError('');
 
     try {
-      // 닉네임 중복 체크
-      const available = await isNicknameAvailable(trimmed);
-      if (!available) {
-        setError('이미 사용 중인 닉네임이에요. 다른 이름을 써주세요!');
-        setStep('input');
-        return;
-      }
-
-      const id = await submitRanking(trimmed, score, distanceMeters);
+      // 같은 닉네임이면 기존 기록 업데이트, 없으면 새로 등록
+      const id = await upsertRanking(trimmed, score, distanceMeters);
       persistNickname(trimmed);
       setMyId(id);
       const top = await getTopRankings(50);
@@ -52,8 +45,11 @@ export function RankingModal({ score, distanceMeters, onClose }: Props) {
       setStep('done');
     } catch (e) {
       console.error('[Firebase 에러]', e);
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(`등록 실패: ${msg}`);
+      if (e instanceof Error && e.message === 'NICKNAME_TAKEN') {
+        setError('다른 사람이 사용 중인 닉네임이에요. 다른 이름을 써주세요!');
+      } else {
+        setError('등록에 실패했어요. 인터넷 연결을 확인해주세요.');
+      }
       setStep('input');
     }
   };

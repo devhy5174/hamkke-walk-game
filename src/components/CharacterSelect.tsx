@@ -34,7 +34,7 @@ export function CharacterSelect({ selected, onSelect }: Props) {
 }
 
 const wrap: CSSProperties = {
-  margin: '12px 0',
+  margin: '10px 0',
 };
 
 const grid: CSSProperties = {

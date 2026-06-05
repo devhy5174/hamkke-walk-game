@@ -1,5 +1,6 @@
-import { ref, push, query, orderByChild, limitToLast, limitToFirst, equalTo, get } from 'firebase/database';
+import { ref, push, set, query, orderByChild, limitToLast, limitToFirst, equalTo, get } from 'firebase/database';
 import { db } from '../firebase';
+import { getDeviceId } from './deviceId';
 
 export interface RankEntry {
   id: string;
@@ -7,23 +8,18 @@ export interface RankEntry {
   score: number;
   distanceMeters: number;
   date: string;
+  deviceId?: string;
 }
 
-export async function submitRanking(
+// 같은 닉네임이면 업데이트, 없으면 새로 등록
+// 다른 기기에서 이미 등록된 닉네임은 차단
+export async function upsertRanking(
   nickname: string,
   score: number,
   distanceMeters: number,
 ): Promise<string> {
-  const result = await push(ref(db, 'rankings'), {
-    nickname,
-    score,
-    distanceMeters,
-    date: new Date().toISOString(),
-  });
-  return result.key!;
-}
+  const deviceId = getDeviceId();
 
-export async function isNicknameAvailable(nickname: string): Promise<boolean> {
   const q = query(
     ref(db, 'rankings'),
     orderByChild('nickname'),
@@ -31,7 +27,34 @@ export async function isNicknameAvailable(nickname: string): Promise<boolean> {
     limitToFirst(1),
   );
   const snapshot = await get(q);
-  return !snapshot.exists();
+
+  if (snapshot.exists()) {
+    let existingKey = '';
+    let existingDeviceId = '';
+    snapshot.forEach(child => {
+      existingKey = child.key!;
+      existingDeviceId = child.val().deviceId ?? '';
+    });
+
+    // 다른 기기에서 등록한 닉네임 → 차단
+    if (existingDeviceId && existingDeviceId !== deviceId) {
+      throw new Error('NICKNAME_TAKEN');
+    }
+
+    // 내 기기 → 기록 업데이트
+    await set(ref(db, `rankings/${existingKey}`), {
+      nickname, score, distanceMeters, deviceId,
+      date: new Date().toISOString(),
+    });
+    return existingKey;
+  } else {
+    // 새 닉네임 등록
+    const result = await push(ref(db, 'rankings'), {
+      nickname, score, distanceMeters, deviceId,
+      date: new Date().toISOString(),
+    });
+    return result.key!;
+  }
 }
 
 export async function getTopRankings(limit = 50): Promise<RankEntry[]> {
@@ -46,7 +69,6 @@ export async function getTopRankings(limit = 50): Promise<RankEntry[]> {
   return entries.sort((a, b) => b.score - a.score);
 }
 
-// 마지막 닉네임 기억
 const NK_KEY = 'hamkke-walk-nickname';
 export const getSavedNickname = (): string => localStorage.getItem(NK_KEY) ?? '';
 export const persistNickname = (n: string): void => { localStorage.setItem(NK_KEY, n); };

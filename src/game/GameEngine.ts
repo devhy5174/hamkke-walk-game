@@ -679,50 +679,60 @@ export class GameEngine {
 
   private drawFootprint(cx: number, cy: number, r: number) {
     const { ctx } = this;
-    // 어두운 테마(숲길 등)에서도 구분되도록 연한 글로우
+    const tid = getThemeByDistance(this.distanceMeters).id;
+    const isDark = tid === 'forest' || tid === 'mountain';
+
+    // 투명 배경 원 (어두운 테마에서 더 밝게)
     ctx.save();
-    ctx.fillStyle = 'rgba(255,235,200,0.22)';
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.32)' : 'rgba(255,235,200,0.22)';
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.92, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.95, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-    // 갈색 발자국 (brightness 높여서 어두운 배경에서도 보임)
+
+    // 발자국 (어두운 테마에서 흰 글로우 추가)
     ctx.save();
-    ctx.filter = 'sepia(1) saturate(2) brightness(0.58)';
+    ctx.filter = 'grayscale(1) brightness(0.28)';
+    if (isDark) {
+      ctx.shadowColor = 'rgba(255,255,255,0.72)';
+      ctx.shadowBlur = 12;
+    }
     ctx.drawImage(this.footprintImg, cx - r, cy - r, r * 2, r * 2);
     ctx.restore();
   }
 
   private drawWaterBottle(cx: number, cy: number, r: number) {
     const { ctx } = this;
-    const bw = r * 1.5,
-      bh = r * 2.5;
-    const bx = cx - bw / 2,
-      by = cy - bh / 2;
-    // 바닥 그림자
+    const bw = r * 1.5, bh = r * 2.5;
+    const tilt = 0.22; // 약 12° 기울기
+    const bob = Math.sin(this.aliveTime * 2.5 + cx * 0.04) * 4; // 동동 float
+
+    // 바닥 그림자 (회전 없음)
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.1)";
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
     ctx.beginPath();
-    ctx.ellipse(cx + 1, by + bh + 2, bw * 0.38, bh * 0.05, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 2, cy + bh / 2 + bob + 3, bw * 0.32, bh * 0.04, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-    // 이미지
+
+    // 물병 (기울기 + floating)
     ctx.save();
-    ctx.shadowColor = "rgba(0,60,160,0.18)";
+    ctx.translate(cx, cy + bob);
+    ctx.rotate(tilt);
+    ctx.shadowColor = 'rgba(0,60,160,0.18)';
     ctx.shadowBlur = 5;
     ctx.shadowOffsetX = 1;
     ctx.shadowOffsetY = 2;
-    ctx.drawImage(this.waterBottleImg, bx, by, bw, bh);
-    ctx.restore();
-    // 유리 반짝임 강화
-    ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.drawImage(this.waterBottleImg, -bw / 2, -bh / 2, bw, bh);
+    // 유리 반짝임
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.72)';
     ctx.beginPath();
-    ctx.roundRect(bx + bw * 0.3, by + bh * 0.3, bw * 0.13, bh * 0.32, 3);
+    ctx.roundRect(-bw / 2 + bw * 0.28, -bh / 2 + bh * 0.28, bw * 0.13, bh * 0.32, 3);
     ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.38)";
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
     ctx.beginPath();
-    ctx.roundRect(bx + bw * 0.31, by + bh * 0.34, bw * 0.07, bh * 0.16, 2);
+    ctx.roundRect(-bw / 2 + bw * 0.45, -bh / 2 + bh * 0.34, bw * 0.07, bh * 0.16, 2);
     ctx.fill();
     ctx.restore();
   }

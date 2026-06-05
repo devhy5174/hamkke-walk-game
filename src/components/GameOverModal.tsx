@@ -7,6 +7,7 @@ interface Props {
   onRestart: () => void;
   onShowRecords: () => void;
   onShowRanking: () => void;
+  onGoHome: () => void;
 }
 
 export function GameOverModal({
@@ -16,6 +17,7 @@ export function GameOverModal({
   onRestart,
   onShowRecords,
   onShowRanking,
+  onGoHome,
 }: Props) {
   const isNewBest = score > 0 && score === bestScore;
 
@@ -68,6 +70,9 @@ export function GameOverModal({
         </button>
         <button style={recordsBtn} onClick={onShowRecords}>
           🏆 내 기록 보기
+        </button>
+        <button style={homeBtn} onClick={onGoHome}>
+          🏠 메인화면 가기
         </button>
       </div>
     </div>
@@ -193,6 +198,19 @@ const recordsBtn: CSSProperties = {
   borderRadius: 50,
   padding: "12px 0",
   fontSize: "0.95rem",
+  fontWeight: 600,
+  cursor: "pointer",
+  width: "100%",
+  marginBottom: 8,
+};
+
+const homeBtn: CSSProperties = {
+  background: "transparent",
+  color: "#A0B4AC",
+  border: "1.5px solid #D0E0DA",
+  borderRadius: 50,
+  padding: "11px 0",
+  fontSize: "0.9rem",
   fontWeight: 600,
   cursor: "pointer",
   width: "100%",
