@@ -9,6 +9,8 @@ interface Props {
   gaugeCount: number;
   isPowerMode: boolean;
   powerTimeLeft: number;
+  isSlowMode: boolean;
+  slowTimeLeft: number;
   currentTheme: GameTheme;
 }
 
@@ -18,6 +20,8 @@ export function GameHUD({
   distanceMeters,
   gaugeCount,
   isPowerMode,
+  isSlowMode,
+  slowTimeLeft,
   currentTheme,
 }: Props) {
   const gaugePct = gaugeCount / GAUGE_CAPACITY;
@@ -42,37 +46,31 @@ export function GameHUD({
         {/* 물병 게이지 — 막대 형태 (중앙) */}
         <div style={center}>
           {isPowerMode ? (
-            /* 파워모드 중: 게이지 숨기고 아이콘만 표시 */
             <div style={{ fontSize: 22, lineHeight: 1 }}>⚡</div>
           ) : (
             <>
               <div style={gaugeLabel}>💧 물병 게이지</div>
               <div style={gaugeTrack}>
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${gaugePct * 100}%`,
-                    background: gaugeFull
-                      ? "linear-gradient(90deg, #FFD166, #FF8C42)"
-                      : "linear-gradient(90deg, #64B5F6, #1976D2)",
-                    borderRadius: 5,
-                    transition: "width 0.25s ease, background 0.3s",
-                    boxShadow: gaugeFull
-                      ? "0 0 8px rgba(255,190,50,0.7)"
-                      : "none",
-                  }}
-                />
+                <div style={{
+                  height: '100%',
+                  width: `${gaugePct * 100}%`,
+                  background: gaugeFull
+                    ? 'linear-gradient(90deg, #FFD166, #FF8C42)'
+                    : 'linear-gradient(90deg, #64B5F6, #1976D2)',
+                  borderRadius: 5,
+                  transition: 'width 0.25s ease, background 0.3s',
+                  boxShadow: gaugeFull ? '0 0 8px rgba(255,190,50,0.7)' : 'none',
+                }} />
               </div>
-              <div
-                style={{
-                  ...gaugeCountText,
-                  color: gaugeFull ? "#FF8C42" : "#5C9CB5",
-                  fontWeight: gaugeFull ? 800 : 600,
-                }}
-              >
-                {gaugeFull ? "⚡ FULL!" : `${gaugeCount} / 10`}
+              <div style={{ ...gaugeCountText, color: gaugeFull ? '#FF8C42' : '#5C9CB5', fontWeight: gaugeFull ? 800 : 600 }}>
+                {gaugeFull ? '⚡ FULL!' : `${gaugeCount} / 10`}
               </div>
             </>
+          )}
+          {isSlowMode && (
+            <div style={{ fontSize: 11, color: '#5BC0EB', fontWeight: 700, marginTop: 2 }}>
+              ⏱️ {Math.ceil(slowTimeLeft)}s
+            </div>
           )}
         </div>
 

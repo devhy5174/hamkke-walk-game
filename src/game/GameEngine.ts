@@ -2,6 +2,7 @@ import type {
   Player,
   Footprint,
   WaterBottle,
+  ClockItem,
   Obstacle,
   GameStats,
   Milestone,
@@ -17,6 +18,9 @@ import {
   FOOTPRINT_SCORE,
   WATER_BASE_SPEED,
   WATER_SPAWN_MS,
+  CLOCK_SPAWN_MS,
+  SLOW_DURATION,
+  SLOW_FACTOR,
   POWER_SPEED_BOOST,
   DISTANCE_SPEED,
   OBSTACLE_BASE_SPEED,
@@ -27,8 +31,8 @@ import {
   SPEED_RAMP,
   MILESTONES,
 } from "./constants";
-import { makeFootprint, makeWaterBottle, makeObstacle } from "./spawn";
-import { hitFootprint, hitWaterBottle, hitObstacle } from "./collision";
+import { makeFootprint, makeWaterBottle, makeClockItem, makeObstacle } from "./spawn";
+import { hitFootprint, hitWaterBottle, hitClockItem, hitObstacle } from "./collision";
 import { type GameTheme, THEMES, getThemeByDistance } from "./themes";
 import { renderBackground, renderDecorations } from "./themeRenderer";
 import { audioManager } from "../utils/audio";
@@ -36,13 +40,24 @@ import footprintSrc from '../assets/images/item-footprint.png';
 import waterBottleSrc from '../assets/images/item-water-bottle.png';
 
 // 장애물 이미지 — 돌(공통) + 테마별 두 번째 장애물
-import obsParRock   from '../assets/images/obstacles/obs-park-rock.png';    // 돌 (공통)
-import obsParPuddle from '../assets/images/obstacles/obs-park-puddle.png';  // 공원: 웅덩이
-import obsForPuddle from '../assets/images/obstacles/obs-forest-puddle.png'; // 숲길: 다람쥐
-import obsAutRock   from '../assets/images/obstacles/obs-autumn-rock.png';  // 단풍: 낙엽
-import obsCheRock   from '../assets/images/obstacles/obs-cherry-rock.png';  // 벚꽃: 꽃잎
-import obsSnoRock   from '../assets/images/obstacles/obs-snow-rock.png';    // 눈길: 눈사람
-import obsMtnRock   from '../assets/images/obstacles/obs-mountain-rock.png'; // 산길: 등산객
+import obsParRock   from '../assets/images/obstacles/obs-park-rock.png';
+import obsParPuddle from '../assets/images/obstacles/obs-park-puddle.png';
+import obsForRock   from '../assets/images/obstacles/obs-forest-rock.png';  // 숲·산: 그루터기
+import obsForPuddle from '../assets/images/obstacles/obs-forest-puddle.png';
+import obsAutRock   from '../assets/images/obstacles/obs-autumn-rock.png';
+import obsCheRock   from '../assets/images/obstacles/obs-cherry-rock.png';
+import obsSnoRock   from '../assets/images/obstacles/obs-snow-rock.png';
+import obsMtnRock   from '../assets/images/obstacles/obs-mountain-rock.png';
+
+// 파워워커 발동 시 테마별 말풍선 메시지
+const POWER_MESSAGES: Record<string, string[]> = {
+  park:     ['날씨 좋다~ ☀️', '기분 최고!', '오늘 산책 완벽~', '상쾌하다!', '신난다~!'],
+  forest:   ['공기가 맑다!', '피톤치드 뿜뿜 🌿', '자연이 최고야~', '힐링되네~', '숲이 좋아!'],
+  autumn:   ['단풍이 예쁘다! 🍁', '가을 산책 최고~', '낙엽이 사각사각', '선선해서 좋아~', '가을이 왔어~'],
+  cherry:   ['꽃이 피었다! 🌸', '봄이 왔어~', '벚꽃 구경 중~', '꽃바람이 살랑~', '너무 예쁘다!'],
+  snow:     ['눈이 왔다! ❄️', '하얗다~!', '발자국이 찍혀~', '눈길 산책~', '겨울 최고!'],
+  mountain: ['정상까지 가자! ⛰️', '힘내자~!', '경치 멋지다!', '등산 화이팅!', '땀 흘리는 중~'],
+};
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -51,18 +66,24 @@ export class GameEngine {
   private player!: Player;
   private footprints: Footprint[] = [];
   private waterBottles: WaterBottle[] = [];
+  private clockItems: ClockItem[] = [];
+  private sweatParticles: { x: number; y: number; vx: number; vy: number; life: number; size: number }[] = [];
+  private sweatTimer = 0;
   private obstacles: Obstacle[] = [];
 
   private score = 0;
   private gaugeCount = 0;
   private isPowerMode = false;
   private powerTimeLeft = 0;
+  private isSlowMode = false;
+  private slowTimeLeft = 0;
 
   private running = false;
   private rafId = 0;
   private prevTime = 0;
   private footprintTimer = 0;
   private waterTimer = 0;
+  private clockTimer = 0;
   private obsTimer = 0;
   private aliveTime = 0;
   private scrollY = 0;
@@ -74,13 +95,18 @@ export class GameEngine {
 
   touchX: number | null = null;
   moveDx = 0;
+  playerPos = { x: 0, y: 0, width: 0, height: 0 }; // render마다 갱신
 
   private characterImg: HTMLImageElement | null = null;
   private readonly footprintImg    = GameEngine.loadImg(footprintSrc);
   private readonly waterBottleImg  = GameEngine.loadImg(waterBottleSrc);
 
-  // 돌: 모든 테마에서 동일한 기본 돌 사용
-  private readonly rockImg = GameEngine.loadImg(obsParRock);
+  // 돌: 숲·산은 그루터기, 나머지는 기본 돌
+  private readonly obsRockByTheme: Record<string, HTMLImageElement> = {
+    default:  GameEngine.loadImg(obsParRock),
+    forest:   GameEngine.loadImg(obsForRock),
+    mountain: GameEngine.loadImg(obsForRock),
+  };
 
   // 테마별 두 번째 장애물 (공원=웅덩이, 그 외=테마 캐릭터)
   private readonly obsPuddleImgs: Record<string, HTMLImageElement> = {
@@ -111,8 +137,10 @@ export class GameEngine {
   private onMilestone: (m: Milestone) => void;
   private onThemeChange: (theme: GameTheme) => void;
   private onDodger: ((msg: string) => void) | null = null;
+  private onPowerMsg: ((msg: string) => void) | null = null;
 
   setDodgerCallback(cb: (msg: string) => void) { this.onDodger = cb; }
+  setPowerMsgCallback(cb: (msg: string) => void) { this.onPowerMsg = cb; }
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -140,13 +168,19 @@ export class GameEngine {
     };
     this.footprints = [];
     this.waterBottles = [];
+    this.clockItems = [];
     this.obstacles = [];
     this.score = 0;
     this.gaugeCount = 0;
     this.isPowerMode = false;
     this.powerTimeLeft = 0;
+    this.isSlowMode = false;
+    this.slowTimeLeft = 0;
     this.footprintTimer = 0;
     this.waterTimer = 0;
+    this.clockTimer = 0;
+    this.sweatParticles = [];
+    this.sweatTimer = 0;
     this.obsTimer = OBSTACLE_SPAWN_MS * 0.55;
     this.aliveTime = 0;
     this.scrollY = 0;
@@ -174,6 +208,8 @@ export class GameEngine {
       distanceMeters: Math.floor(this.distanceMeters),
       isPowerMode: this.isPowerMode,
       powerTimeLeft: this.powerTimeLeft,
+      isSlowMode: this.isSlowMode,
+      slowTimeLeft: this.slowTimeLeft,
     });
   }
 
@@ -194,7 +230,8 @@ export class GameEngine {
     this.aliveTime += dtSec;
     const { width } = this.canvas;
     const sm = this.speedMult;
-    const boost = this.isPowerMode ? POWER_SPEED_BOOST : 1; // 파워모드 전체 속도 배율
+    // 파워모드 > 슬로우 우선순위 (동시에 발동 시 파워모드 적용)
+    const boost = this.isPowerMode ? POWER_SPEED_BOOST : this.isSlowMode ? SLOW_FACTOR : 1;
     const pathLeft = width * ROAD_L;
     const pathRight = width * ROAD_R;
 
@@ -225,6 +262,19 @@ export class GameEngine {
         this.powerTimeLeft = 0;
         this.emitUpdate();
       } else if (Math.ceil(this.powerTimeLeft) !== prevCeil) {
+        this.emitUpdate();
+      }
+    }
+
+    // 슬로우 카운트다운
+    if (this.isSlowMode) {
+      const prevCeil = Math.ceil(this.slowTimeLeft);
+      this.slowTimeLeft -= dtSec;
+      if (this.slowTimeLeft <= 0) {
+        this.isSlowMode = false;
+        this.slowTimeLeft = 0;
+        this.emitUpdate();
+      } else if (Math.ceil(this.slowTimeLeft) !== prevCeil) {
         this.emitUpdate();
       }
     }
@@ -276,6 +326,15 @@ export class GameEngine {
       this.waterBottles.push(makeWaterBottle(width));
     }
 
+    // 시계 아이템 스폰 — 단풍길(350m)부터, 슬로우 중엔 스폰 안 함
+    if (!this.isSlowMode && this.distanceMeters >= 350) {
+      this.clockTimer += dtSec * 1000;
+      if (this.clockTimer >= CLOCK_SPAWN_MS / sm) {
+        this.clockTimer = 0;
+        this.clockItems.push(makeClockItem(width));
+      }
+    }
+
     // 장애물 스폰
     this.obsTimer += dtSec * 1000;
     if (this.obsTimer >= OBSTACLE_SPAWN_MS / sm) {
@@ -317,7 +376,22 @@ export class GameEngine {
           this.gaugeCount = 0;
           this.isPowerMode = true;
           this.powerTimeLeft = POWER_DURATION;
+          const tid = getThemeByDistance(this.distanceMeters).id;
+          const msgs = POWER_MESSAGES[tid] ?? POWER_MESSAGES['park'];
+          this.onPowerMsg?.(msgs[Math.floor(Math.random() * msgs.length)]);
         }
+        this.emitUpdate();
+        return false;
+      }
+      return item.y < this.canvas.height + item.radius * 2;
+    });
+
+    // 시계 아이템 이동 + 수집 → 슬로우 발동
+    this.clockItems = this.clockItems.filter(item => {
+      item.y += itemSpeed;
+      if (hitClockItem(player, item)) {
+        this.isSlowMode = true;
+        this.slowTimeLeft = SLOW_DURATION;
         this.emitUpdate();
         return false;
       }
@@ -326,7 +400,6 @@ export class GameEngine {
 
     // 장애물 이동 + 충돌 (파워모드 중 무적)
     const obsSpeed = OBSTACLE_BASE_SPEED * sm * boost * dtSec;
-    const tid = getThemeByDistance(this.distanceMeters).id;
 
     for (const obs of this.obstacles) {
       obs.y += obsSpeed;
@@ -351,9 +424,7 @@ export class GameEngine {
       }
     }
 
-    // dodger는 충돌 판정 제외
-    const collidable = this.obstacles.filter(o => o.style !== 'dodger');
-    if (!this.isPowerMode && collidable.some(obs => hitObstacle(player, obs))) {
+    if (!this.isPowerMode && this.obstacles.some(obs => hitObstacle(player, obs))) {
       this.running = false;
       this.render();
       this.onGameOver();
@@ -365,6 +436,33 @@ export class GameEngine {
         obs.x > -obs.width - 80 &&
         obs.x < this.canvas.width + 80,
     );
+
+    // 땀방울 파티클 (150m 이후, 빨라질수록 자주 생성)
+    if (this.distanceMeters >= 150 && this.player) {
+      this.sweatTimer += dtSec;
+      const interval = Math.max(0.35, 1.2 / this.speedMult);
+      if (this.sweatTimer >= interval) {
+        this.sweatTimer = 0;
+        const r = (this.player.height + 8) / 2 * 1.13;
+        const cx = this.player.x + this.player.width / 2;
+        const cy = this.player.y - 4 + r;
+        this.sweatParticles.push({
+          x: cx + r * 0.65 + (Math.random() - 0.3) * 6,
+          y: cy - r * 0.45 + (Math.random() - 0.5) * 6,
+          vx: 28 + Math.random() * 28,
+          vy: -(52 + Math.random() * 36),
+          life: 1,
+          size: 3.5 + Math.random() * 2.5,
+        });
+      }
+      this.sweatParticles = this.sweatParticles.filter(p => {
+        p.x += p.vx * dtSec;
+        p.y += p.vy * dtSec;
+        p.vy += 55 * dtSec; // 살짝 중력
+        p.life -= 0.85 * dtSec;
+        return p.life > 0;
+      });
+    }
   }
 
   private render() {
@@ -396,6 +494,11 @@ export class GameEngine {
     // ── 물병 아이템 ──
     for (const item of this.waterBottles) {
       this.drawWaterBottle(item.x, item.y, item.radius);
+    }
+
+    // ── 시계 아이템 ──
+    for (const item of this.clockItems) {
+      this.drawClockItem(item.x, item.y, item.radius);
     }
 
     // ── 장애물 ──
@@ -477,6 +580,30 @@ export class GameEngine {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
     }
+
+    // ── 땀방울 파티클 ──
+    for (const p of this.sweatParticles) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life) * 0.9;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(-Math.PI / 5); // 오른쪽 위 방향으로 기울기
+      // 물방울 몸통
+      ctx.fillStyle = '#64B5F6';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size * 0.55, p.size, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 하이라이트
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath();
+      ctx.ellipse(-p.size * 0.12, -p.size * 0.22, p.size * 0.18, p.size * 0.28, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 플레이어 위치 노출 (SpeechBubble 추적용)
+    if (this.player) {
+      this.playerPos = { x: this.player.x, y: this.player.y, width: this.player.width, height: this.player.height };
+    }
   }
 
   private drawFlameEffect() {
@@ -536,6 +663,18 @@ export class GameEngine {
       ctx.fill();
       ctx.restore();
     }
+  }
+
+  private drawClockItem(cx: number, cy: number, r: number) {
+    const { ctx } = this;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.22)';
+    ctx.shadowBlur = 6;
+    ctx.font = `${r * 2.1}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⏱️', cx, cy);
+    ctx.restore();
   }
 
   private drawFootprint(cx: number, cy: number, r: number) {
@@ -608,6 +747,7 @@ export class GameEngine {
 
     // 이미지
     ctx.save();
+    ctx.filter = 'saturate(1.4) contrast(1.1) brightness(1.05)';
     ctx.translate(cx, cy + bob);
     ctx.rotate(tilt);
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
@@ -651,13 +791,22 @@ export class GameEngine {
   }
 
   private drawRock(x: number, y: number, w: number, h: number) {
-    // 돌은 모든 테마에서 동일
-    this.ctx.drawImage(this.rockImg, x, y, w, h);
+    const tid = getThemeByDistance(this.distanceMeters).id;
+    const img = this.obsRockByTheme[tid] ?? this.obsRockByTheme['default'];
+    const { ctx } = this;
+    ctx.save();
+    ctx.filter = 'saturate(1.5) contrast(1.15) brightness(1.05)';
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
   }
 
   private drawPuddle(x: number, y: number, w: number, h: number) {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs['park'];
-    this.ctx.drawImage(img, x, y, w, h);
+    const { ctx } = this;
+    ctx.save();
+    ctx.filter = 'saturate(1.5) contrast(1.15) brightness(1.05)';
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
   }
 }

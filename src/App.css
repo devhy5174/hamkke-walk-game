@@ -104,8 +104,6 @@
 
 .speech-bubble {
   position: absolute;
-  bottom: 27%;
-  left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 15;

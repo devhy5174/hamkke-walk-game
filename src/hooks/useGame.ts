@@ -18,6 +18,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [distanceMeters, setDistanceMeters] = useState(0);
   const [isPowerMode, setIsPowerMode] = useState(false);
   const [powerTimeLeft, setPowerTimeLeft] = useState(0);
+  const [isSlowMode, setIsSlowMode] = useState(false);
+  const [slowTimeLeft, setSlowTimeLeft] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -36,6 +38,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     setDistanceMeters(stats.distanceMeters);
     setIsPowerMode(stats.isPowerMode);
     setPowerTimeLeft(stats.powerTimeLeft);
+    setIsSlowMode(stats.isSlowMode);
+    setSlowTimeLeft(stats.slowTimeLeft);
   }, []);
 
   const handleGameOver = useCallback(() => {
@@ -95,6 +99,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     engineRef.current = new GameEngine(canvas, handleUpdate, handleGameOver, handleMilestone, handleThemeChange);
     if (charSrc) engineRef.current.setCharacter(charSrc);
     engineRef.current.setDodgerCallback(handleDodger);
+    engineRef.current.setPowerMsgCallback(handleDodger); // 말풍선 공유
 
     scoreRef.current = 0;
     setScore(0);
@@ -103,14 +108,31 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     setIsPowerMode(false);
     setPowerTimeLeft(0);
     setGameEnded(false);
+    setIsSlowMode(false);
+    setSlowTimeLeft(0);
     setGameOver(false);
     setIsStarted(true);
     engineRef.current.start();
     audioManager.playBGM();
+
+    // 게임 시작 인사 말풍선 (0.8초 후 랜덤)
+    const startMsgs = [
+      '오늘도 화이팅! 💪',
+      '날씨 좋다~ 🌤️',
+      '같이 걸어요! 🌿',
+      '기분 좋은 하루야!',
+      '건강한 하루 시작~',
+      '준비됐나요? 출발!',
+      '오늘 목표 달성하자!',
+      '산책 최고야~ 🚶',
+    ];
+    setTimeout(() => {
+      handleDodger(startMsgs[Math.floor(Math.random() * startMsgs.length)]);
+    }, 800);
   }, [canvasRef, handleUpdate, handleGameOver, handleMilestone, handleThemeChange]);
 
   return {
-    score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft,
+    score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft, isSlowMode, slowTimeLeft,
     bestScore, gameEnded, gameOver, isStarted,
     currentTheme, activeMilestone, activeThemeToast, dodgerMsg,
     startGame, showResult, engineRef,

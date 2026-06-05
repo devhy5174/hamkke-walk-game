@@ -16,7 +16,7 @@ import './App.css';
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const {
-    score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft,
+    score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft, isSlowMode, slowTimeLeft,
     bestScore, gameEnded, gameOver, isStarted,
     currentTheme, activeMilestone, activeThemeToast, dodgerMsg,
     startGame, showResult, engineRef,
@@ -53,10 +53,12 @@ function App() {
           gaugeCount={gaugeCount}
           isPowerMode={isPowerMode}
           powerTimeLeft={powerTimeLeft}
+          isSlowMode={isSlowMode}
+          slowTimeLeft={slowTimeLeft}
           currentTheme={currentTheme}
         />
       )}
-      {isStarted && <SpeechBubble message={dodgerMsg} />}
+      {isStarted && <SpeechBubble message={dodgerMsg} engineRef={engineRef} canvasRef={canvasRef} />}
       {isStarted && <MilestoneToast milestone={activeMilestone} />}
       {isStarted && <ThemeToast theme={activeThemeToast} />}
       {isStarted && <PowerOverlay isPowerMode={isPowerMode} powerTimeLeft={powerTimeLeft} />}

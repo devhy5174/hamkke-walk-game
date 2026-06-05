@@ -26,6 +26,12 @@ export const ROCK_HEIGHT = 60;
 export const PUDDLE_WIDTH = 75; // 76 → 72 (웅덩이 조금 좁게)
 export const PUDDLE_HEIGHT = 55;
 
+// 시계 아이템 (속도 감소)
+export const CLOCK_RADIUS = 16;
+export const CLOCK_SPAWN_MS = 5500;  // 물병(2500)보다 2배 이상 희귀
+export const SLOW_DURATION = 6;      // 초
+export const SLOW_FACTOR = 0.5;      // 슬로우 중 속도 배율 (절반)
+
 // 파워워커 모드
 export const GAUGE_CAPACITY = 10;
 export const POWER_DURATION = 5;

@@ -19,6 +19,13 @@ export interface WaterBottle {
   radius: number;
 }
 
+export interface ClockItem {
+  id: number;
+  x: number;
+  y: number;
+  radius: number;
+}
+
 export interface Obstacle {
   id: number;
   x: number;
@@ -35,10 +42,12 @@ export interface Obstacle {
 
 export interface GameStats {
   score: number;
-  gaugeCount: number;      // 물병 게이지 (0~10)
+  gaugeCount: number;
   distanceMeters: number;
   isPowerMode: boolean;
-  powerTimeLeft: number;   // 파워모드 남은 시간(초)
+  powerTimeLeft: number;
+  isSlowMode: boolean;
+  slowTimeLeft: number;
 }
 
 export interface Milestone {
