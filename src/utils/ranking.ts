@@ -1,4 +1,4 @@
-import { ref, push, set, query, orderByChild, limitToLast, limitToFirst, equalTo, get } from 'firebase/database';
+import { ref, push, update, query, orderByChild, limitToLast, limitToFirst, equalTo, get } from 'firebase/database';
 import { db } from '../firebase';
 import { getDeviceId } from './deviceId';
 
@@ -11,7 +11,7 @@ export interface RankEntry {
   deviceId?: string;
 }
 
-// 같은 닉네임이면 업데이트, 없으면 새로 등록
+// 점수·거리 각각 독립적으로 최고기록 갱신
 // 다른 기기에서 이미 등록된 닉네임은 차단
 export async function upsertRanking(
   nickname: string,
@@ -30,28 +30,34 @@ export async function upsertRanking(
 
   if (snapshot.exists()) {
     let existingKey = '';
-    let existingDeviceId = '';
+    let existingVal: Record<string, unknown> = {};
     snapshot.forEach(child => {
       existingKey = child.key!;
-      existingDeviceId = child.val().deviceId ?? '';
+      existingVal = child.val();
     });
 
     // 다른 기기에서 등록한 닉네임 → 차단
-    if (existingDeviceId && existingDeviceId !== deviceId) {
+    if (existingVal.deviceId && existingVal.deviceId !== deviceId) {
       throw new Error('NICKNAME_TAKEN');
     }
 
-    let existingScore = 0;
-    snapshot.forEach(child => { existingScore = child.val().score ?? 0; });
+    const existingScore = (existingVal.score as number) ?? 0;
+    const existingDist  = (existingVal.distanceMeters as number) ?? 0;
 
-    // 기존 최고기록보다 낮으면 업데이트 거부
-    if (score <= existingScore) {
-      throw new Error(`SCORE_NOT_BEATEN:${existingScore}`);
+    const scoreBeat = score > existingScore;
+    const distBeat  = distanceMeters > existingDist;
+
+    // 점수도 거리도 모두 기존보다 낮으면 거부
+    if (!scoreBeat && !distBeat) {
+      throw new Error(`NOT_BEATEN:${existingScore}:${existingDist}`);
     }
 
-    // 내 기기 + 신기록 → 업데이트
-    await set(ref(db, `rankings/${existingKey}`), {
-      nickname, score, distanceMeters, deviceId,
+    // 각각 더 높은 값으로만 갱신
+    await update(ref(db, `rankings/${existingKey}`), {
+      nickname,
+      deviceId,
+      score:          scoreBeat ? score          : existingScore,
+      distanceMeters: distBeat  ? distanceMeters : existingDist,
       date: new Date().toISOString(),
     });
     return existingKey;
