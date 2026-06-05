@@ -31,6 +31,7 @@ import { makeFootprint, makeWaterBottle, makeObstacle } from "./spawn";
 import { hitFootprint, hitWaterBottle, hitObstacle } from "./collision";
 import { type GameTheme, THEMES, getThemeByDistance } from "./themes";
 import { renderBackground, renderDecorations } from "./themeRenderer";
+import { audioManager } from "../utils/audio";
 import footprintSrc from "../assets/images/item-footprint.png";
 import waterBottleSrc from "../assets/images/item-water-bottle.png";
 import rockSrc from "../assets/images/obstacle-rock.png";
@@ -281,6 +282,7 @@ export class GameEngine {
       item.y += itemSpeed;
       if (hitWaterBottle(player, item)) {
         this.gaugeCount++;
+        audioManager.playWater();
         if (this.gaugeCount >= GAUGE_CAPACITY) {
           this.gaugeCount = 0;
           this.isPowerMode = true;
