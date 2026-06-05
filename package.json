@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:ait": "ait build",
+    "deploy": "ait deploy",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -15,6 +17,7 @@
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
+    "@apps-in-toss/web-framework": "^2.6.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",

@@ -77,6 +77,18 @@ export async function getTopRankings(limit = 50): Promise<RankEntry[]> {
   return entries.sort((a, b) => b.score - a.score);
 }
 
+export async function getTopRankingsByDistance(limit = 50): Promise<RankEntry[]> {
+  const q = query(ref(db, 'rankings'), orderByChild('distanceMeters'), limitToLast(limit));
+  const snapshot = await get(q);
+  if (!snapshot.exists()) return [];
+
+  const entries: RankEntry[] = [];
+  snapshot.forEach(child => {
+    entries.push({ id: child.key!, ...child.val() });
+  });
+  return entries.sort((a, b) => b.distanceMeters - a.distanceMeters);
+}
+
 const NK_KEY = 'hamkke-walk-nickname';
 export const getSavedNickname = (): string => localStorage.getItem(NK_KEY) ?? '';
 export const persistNickname = (n: string): void => { localStorage.setItem(NK_KEY, n); };

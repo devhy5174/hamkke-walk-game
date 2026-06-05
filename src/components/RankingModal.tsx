@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
-import { upsertRanking, getTopRankings, getSavedNickname, persistNickname } from '../utils/ranking';
+import { upsertRanking, getTopRankings, getTopRankingsByDistance, getSavedNickname, persistNickname } from '../utils/ranking';
 import type { RankEntry } from '../utils/ranking';
 import { hasProfanity } from '../utils/profanity';
 
 type Step = 'input' | 'loading' | 'done';
+type Tab = 'score' | 'distance';
 
 interface Props {
   score?: number;
@@ -17,16 +18,21 @@ const MEDALS = ['🥇', '🥈', '🥉'];
 
 export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, onClose }: Props) {
   const [step, setStep] = useState<Step>(viewOnly ? 'loading' : 'input');
+  const [tab, setTab] = useState<Tab>('score');
 
   useEffect(() => {
     if (!viewOnly) return;
-    getTopRankings(50).then(top => {
-      setRankings(top);
-      setStep('done');
-    }).catch(() => setStep('done'));
+    getTopRankings(50)
+      .then(top => setRankings(top))
+      .catch(() => {})
+      .finally(() => setStep('done'));
+    getTopRankingsByDistance(50)
+      .then(top => setDistanceRankings(top))
+      .catch(() => {});
   }, [viewOnly]);
   const [nickname, setNickname] = useState(getSavedNickname());
   const [rankings, setRankings] = useState<RankEntry[]>([]);
+  const [distanceRankings, setDistanceRankings] = useState<RankEntry[]>([]);
   const [myId, setMyId] = useState('');
   const [error, setError] = useState('');
 
@@ -51,6 +57,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
       setMyId(id);
       const top = await getTopRankings(50);
       setRankings(top);
+      getTopRankingsByDistance(50).then(d => setDistanceRankings(d)).catch(() => {});
       setStep('done');
     } catch (e) {
       console.error('[Firebase 에러]', e);
@@ -110,16 +117,23 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
 
         {/* ── 전체 랭킹 ── */}
         {step === 'done' && (() => {
+          const activeList = tab === 'score' ? rankings : distanceRankings;
           const myIdx = viewOnly
-            ? rankings.findIndex(r => r.nickname === getSavedNickname())
-            : rankings.findIndex(r => r.id === myId);
-          const myEntry = myIdx >= 0 ? rankings[myIdx] : null;
+            ? activeList.findIndex(r => r.nickname === getSavedNickname())
+            : activeList.findIndex(r => r.id === myId);
+          const myEntry = myIdx >= 0 ? activeList[myIdx] : null;
 
           return <>
             <div style={headerArea}>
               <div style={{ fontSize: '2rem' }}>🌍</div>
               <h2 style={title}>전체 랭킹</h2>
               <p style={{ margin: 0, fontSize: '0.8rem', color: '#A0B4AC' }}>상위 50위</p>
+            </div>
+
+            {/* 탭 */}
+            <div style={tabBar}>
+              <button style={tab === 'score' ? tabActiveBtn : tabBtn} onClick={() => setTab('score')}>점수순</button>
+              <button style={tab === 'distance' ? tabActiveBtn : tabBtn} onClick={() => setTab('distance')}>거리순</button>
             </div>
 
             <div style={rankList}>
@@ -131,7 +145,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                 <span style={{ ...colDistH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>거리</span>
               </div>
 
-              {rankings.map((r, i) => {
+              {activeList.map((r, i) => {
                 const isMe = viewOnly ? r.nickname === getSavedNickname() : r.id === myId;
                 return (
                   <div key={r.id} style={{
@@ -157,7 +171,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                 );
               })}
 
-              {rankings.length === 0 && (
+              {activeList.length === 0 && (
                 <div style={{ textAlign: 'center', padding: 20, color: '#A0B4AC' }}>첫 번째 기록이에요!</div>
               )}
             </div>
@@ -170,7 +184,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                   전체 {myIdx + 1}위
                 </span>
                 <span style={{ color: '#3DAE79', fontWeight: 700 }}>
-                  {myEntry.score.toLocaleString()}점
+                  {tab === 'score' ? `${myEntry.score.toLocaleString()}점` : `${myEntry.distanceMeters}m`}
                 </span>
               </div>
             ) : getSavedNickname() ? (
@@ -267,6 +281,32 @@ const myRankBar: CSSProperties = {
   padding: '8px 14px',
   marginTop: 10,
   gap: 8,
+};
+
+const tabBar: CSSProperties = {
+  display: 'flex',
+  gap: 6,
+  marginBottom: 10,
+};
+
+const tabBtn: CSSProperties = {
+  flex: 1,
+  padding: '8px 0',
+  border: '1.5px solid #D0E8DA',
+  borderRadius: 50,
+  background: 'transparent',
+  color: '#A0B4AC',
+  fontSize: '0.88rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
+
+const tabActiveBtn: CSSProperties = {
+  ...tabBtn,
+  background: '#3DAE79',
+  border: '1.5px solid #3DAE79',
+  color: '#fff',
 };
 
 const rankList: CSSProperties = {

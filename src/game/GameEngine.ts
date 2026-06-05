@@ -975,6 +975,7 @@ export class GameEngine {
     const img = this.obsRockByTheme[tid] ?? this.obsRockByTheme["default"];
     const { ctx } = this;
     ctx.save();
+    ctx.filter = "saturate(160%) contrast(115%) brightness(105%)";
     ctx.shadowColor = "rgba(40,40,40,0.7)";
     ctx.shadowBlur = 4;
     ctx.drawImage(img, x, y, w, h);
@@ -988,6 +989,7 @@ export class GameEngine {
     const img = this.obsPuddleImgs[staticTid] ?? this.obsPuddleImgs["park"];
     const { ctx } = this;
     ctx.save();
+    ctx.filter = "saturate(160%) contrast(115%) brightness(105%)";
     ctx.shadowColor = "rgba(40,40,40,0.7)";
     ctx.shadowBlur = 4;
     ctx.drawImage(img, x, y, w, h);
