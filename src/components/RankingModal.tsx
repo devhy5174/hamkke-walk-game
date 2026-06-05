@@ -104,7 +104,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
         {step === 'loading' && (
           <div style={{ textAlign: 'center', padding: '44px 0' }}>
             <div style={{ fontSize: '2rem', marginBottom: 12 }}>⏳</div>
-            <div style={{ color: '#7AAD8E', fontWeight: 600 }}>등록 중...</div>
+            <div style={{ color: '#7AAD8E', fontWeight: 600 }}>{viewOnly ? '불러오는 중...' : '등록 중...'}</div>
           </div>
         )}
 
