@@ -48,12 +48,26 @@ export function GameCanvas({ canvasRef, engineRef }: Props) {
     canvas.addEventListener("touchend", onTouchEnd);
     canvas.addEventListener("touchcancel", onTouchEnd);
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft")  { e.preventDefault(); if (engineRef.current) engineRef.current.moveDx = -1; }
+      if (e.key === "ArrowRight") { e.preventDefault(); if (engineRef.current) engineRef.current.moveDx =  1; }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (engineRef.current) engineRef.current.moveDx = 0;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+
     return () => {
       window.removeEventListener("resize", sync);
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchmove", onTouchMove);
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
     };
   }, [canvasRef, engineRef]);
 
