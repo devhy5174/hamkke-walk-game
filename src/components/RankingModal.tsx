@@ -141,8 +141,13 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
               <div style={{ ...rankRow, background: 'transparent', paddingBottom: 4 }}>
                 <span style={colRankH} />
                 <span style={{ ...colNameH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>닉네임</span>
-                <span style={{ ...colScoreH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>점수</span>
-                <span style={{ ...colDistH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>거리</span>
+                {tab === 'score' ? <>
+                  <span style={{ ...colScoreH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>점수</span>
+                  <span style={{ ...colDistH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>거리</span>
+                </> : <>
+                  <span style={{ ...colScoreH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>거리</span>
+                  <span style={{ ...colDistH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>점수</span>
+                </>}
               </div>
 
               {activeList.map((r, i) => {
@@ -161,12 +166,21 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                     <span style={{ ...colNameH, color: '#4A5568' }}>
                       {r.nickname}{isMe && <span style={{ color: '#3DAE79', marginLeft: 2 }}>★</span>}
                     </span>
-                    <span style={{ ...colScoreH, color: '#4A5568', fontWeight: 600 }}>
-                      {r.score.toLocaleString()}
-                    </span>
-                    <span style={{ ...colDistH, color: '#8ABD9E' }}>
-                      {r.distanceMeters}m
-                    </span>
+                    {tab === 'score' ? <>
+                      <span style={{ ...colScoreH, color: '#4A5568', fontWeight: 600 }}>
+                        {r.score.toLocaleString()}
+                      </span>
+                      <span style={{ ...colDistH, color: '#8ABD9E' }}>
+                        {r.distanceMeters}m
+                      </span>
+                    </> : <>
+                      <span style={{ ...colScoreH, color: '#4A5568', fontWeight: 600 }}>
+                        {r.distanceMeters}m
+                      </span>
+                      <span style={{ ...colDistH, color: '#8ABD9E' }}>
+                        {r.score.toLocaleString()}
+                      </span>
+                    </>}
                   </div>
                 );
               })}
