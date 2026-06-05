@@ -39,6 +39,7 @@ function App() {
 
   const [showRecords, setShowRecords] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
+  const [showRankingViewOnly, setShowRankingViewOnly] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState(getSavedCharId());
 
@@ -119,9 +120,9 @@ function App() {
             </button>
             <button
               className="btn-secondary"
-              onClick={() => setShowRecords(true)}
+              onClick={() => setShowRankingViewOnly(true)}
             >
-              🏆 내 기록 보기
+              🌍 전체 랭킹 보기
             </button>
           </div>
         </div>
@@ -178,7 +179,6 @@ function App() {
           bestScore={bestScore}
           distanceMeters={distanceMeters}
           onRestart={handleRestart}
-          onShowRecords={() => setShowRecords(true)}
           onShowRanking={() => setShowRanking(true)}
           onGoHome={() => { engineRef.current?.stop(); window.location.reload(); }}
         />
@@ -193,6 +193,12 @@ function App() {
           score={score}
           distanceMeters={distanceMeters}
           onClose={() => setShowRanking(false)}
+        />
+      )}
+      {showRankingViewOnly && (
+        <RankingModal
+          viewOnly
+          onClose={() => setShowRankingViewOnly(false)}
         />
       )}
     </div>

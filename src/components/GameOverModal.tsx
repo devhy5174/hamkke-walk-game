@@ -5,7 +5,6 @@ interface Props {
   bestScore: number;
   distanceMeters: number;
   onRestart: () => void;
-  onShowRecords: () => void;
   onShowRanking: () => void;
   onGoHome: () => void;
 }
@@ -15,7 +14,6 @@ export function GameOverModal({
   bestScore,
   distanceMeters,
   onRestart,
-  onShowRecords,
   onShowRanking,
   onGoHome,
 }: Props) {
@@ -67,9 +65,6 @@ export function GameOverModal({
         </button>
         <button style={rankingBtn} onClick={onShowRanking}>
           🌍 전체 랭킹 등록
-        </button>
-        <button style={recordsBtn} onClick={onShowRecords}>
-          🏆 내 기록 보기
         </button>
         <button style={homeBtn} onClick={onGoHome}>
           🏠 메인화면 가기
@@ -189,19 +184,6 @@ const rankingBtn: CSSProperties = {
   width: "100%",
   marginBottom: 8,
   boxShadow: "0 3px 12px rgba(45,125,82,0.3)",
-};
-
-const recordsBtn: CSSProperties = {
-  background: "transparent",
-  color: "#3DAE79",
-  border: "1.5px solid #3DAE79",
-  borderRadius: 50,
-  padding: "12px 0",
-  fontSize: "0.95rem",
-  fontWeight: 600,
-  cursor: "pointer",
-  width: "100%",
-  marginBottom: 8,
 };
 
 const homeBtn: CSSProperties = {

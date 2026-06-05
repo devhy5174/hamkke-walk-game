@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { upsertRanking, getTopRankings, getSavedNickname, persistNickname } from '../utils/ranking';
 import type { RankEntry } from '../utils/ranking';
@@ -7,15 +7,24 @@ import { hasProfanity } from '../utils/profanity';
 type Step = 'input' | 'loading' | 'done';
 
 interface Props {
-  score: number;
-  distanceMeters: number;
+  score?: number;
+  distanceMeters?: number;
+  viewOnly?: boolean;
   onClose: () => void;
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-export function RankingModal({ score, distanceMeters, onClose }: Props) {
-  const [step, setStep] = useState<Step>('input');
+export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, onClose }: Props) {
+  const [step, setStep] = useState<Step>(viewOnly ? 'loading' : 'input');
+
+  useEffect(() => {
+    if (!viewOnly) return;
+    getTopRankings(50).then(top => {
+      setRankings(top);
+      setStep('done');
+    }).catch(() => setStep('done'));
+  }, [viewOnly]);
   const [nickname, setNickname] = useState(getSavedNickname());
   const [rankings, setRankings] = useState<RankEntry[]>([]);
   const [myId, setMyId] = useState('');
