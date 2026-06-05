@@ -8,6 +8,7 @@ import { ThemeToast } from './components/ThemeToast';
 import { PowerOverlay } from './components/PowerOverlay';
 import { RecordsModal } from './components/RecordsModal';
 import { RankingModal } from './components/RankingModal';
+import { ThemeCollectionModal } from './components/ThemeCollectionModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { SpeechBubble } from './components/SpeechBubble';
 import { CHARACTERS, getSavedCharId, saveCharId } from './game/characters';
@@ -24,6 +25,7 @@ function App() {
 
   const [showRecords, setShowRecords] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
+  const [showCollection, setShowCollection] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState(getSavedCharId());
 
   const selectedChar = CHARACTERS.find(c => c.id === selectedCharId) ?? CHARACTERS[0];
@@ -92,6 +94,9 @@ function App() {
             <button className="btn-primary" onClick={handleStart}>
               걷기 시작 🌿
             </button>
+            <button className="btn-secondary" onClick={() => setShowCollection(true)}>
+              🗺️ 산책 도감
+            </button>
             <button className="btn-secondary" onClick={() => setShowRecords(true)}>
               🏆 내 기록 보기
             </button>
@@ -138,6 +143,7 @@ function App() {
         />
       )}
 
+      {showCollection && <ThemeCollectionModal onClose={() => setShowCollection(false)} />}
       {showRecords && <RecordsModal onClose={() => setShowRecords(false)} />}
       {showRanking && (
         <RankingModal

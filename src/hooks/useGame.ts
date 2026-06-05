@@ -4,6 +4,7 @@ import { GameEngine } from '../game/GameEngine';
 import type { GameStats, Milestone } from '../game/types';
 import { type GameTheme, THEMES } from '../game/themes';
 import { saveRecord } from '../utils/records';
+import { unlockTheme } from '../utils/themeCollection';
 import { audioManager } from '../utils/audio';
 
 export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
@@ -77,6 +78,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
 
   const handleThemeChange = useCallback((theme: GameTheme) => {
     setCurrentTheme(theme);
+    unlockTheme(theme.id); // 처음 방문한 테마 도감 해금
     if (themeToastTimer.current) clearTimeout(themeToastTimer.current);
     setActiveThemeToast(theme);
     themeToastTimer.current = setTimeout(() => {
