@@ -36,6 +36,21 @@ import { hitFootprint, hitWaterBottle, hitClockItem, hitObstacle } from "./colli
 import { type GameTheme, THEMES, getThemeByDistance } from "./themes";
 import { renderBackground, renderDecorations } from "./themeRenderer";
 import { audioManager } from "../utils/audio";
+
+// ctx.roundRect 미지원 WebView 폴백
+function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    const cr = Math.min(r, w / 2, h / 2);
+    ctx.moveTo(x + cr, y);
+    ctx.lineTo(x + w - cr, y);  ctx.arcTo(x + w, y, x + w, y + cr, cr);
+    ctx.lineTo(x + w, y + h - cr); ctx.arcTo(x + w, y + h, x + w - cr, y + h, cr);
+    ctx.lineTo(x + cr, y + h);  ctx.arcTo(x, y + h, x, y + h - cr, cr);
+    ctx.lineTo(x, y + cr);      ctx.arcTo(x, y, x + cr, y, cr);
+    ctx.closePath();
+  }
+}
 import footprintSrc from '../assets/images/item-footprint.png';
 import waterBottleSrc from '../assets/images/item-water-bottle.png';
 
@@ -742,11 +757,11 @@ export class GameEngine {
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
     ctx.fillStyle = 'rgba(255,255,255,0.72)';
     ctx.beginPath();
-    ctx.roundRect(-bw / 2 + bw * 0.28, -bh / 2 + bh * 0.28, bw * 0.13, bh * 0.32, 3);
+    rrect(ctx, -bw / 2 + bw * 0.28, -bh / 2 + bh * 0.28, bw * 0.13, bh * 0.32, 3);
     ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.38)';
     ctx.beginPath();
-    ctx.roundRect(-bw / 2 + bw * 0.45, -bh / 2 + bh * 0.34, bw * 0.07, bh * 0.16, 2);
+    rrect(ctx, -bw / 2 + bw * 0.45, -bh / 2 + bh * 0.34, bw * 0.07, bh * 0.16, 2);
     ctx.fill();
     ctx.restore();
   }
@@ -795,7 +810,7 @@ export class GameEngine {
         ctx.strokeStyle = 'rgba(0,0,0,0.1)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.roundRect(bx, by, tw + 16, 24, 12);
+        rrect(ctx, bx, by, tw + 16, 24, 12);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = '#2D7D52';

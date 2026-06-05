@@ -197,7 +197,7 @@ const inputStyle: CSSProperties = {
   border: '1.5px solid #D0E8DA',
   borderRadius: 12,
   padding: '13px 16px',
-  fontSize: '1rem',
+  fontSize: '16px', // iOS 자동 줌 방지 (16px 미만 시 자동 확대됨)
   outline: 'none',
   marginBottom: 6,
   fontFamily: 'inherit',
