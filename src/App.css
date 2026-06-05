@@ -76,6 +76,24 @@
   transform: scale(0.98);
 }
 
+.btn-secondary {
+  background: transparent;
+  color: #3DAE79;
+  border: 1.5px solid #3DAE79;
+  border-radius: 50px;
+  padding: 12px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  letter-spacing: 0.3px;
+}
+
+.btn-secondary:active {
+  background: rgba(61, 174, 121, 0.08);
+}
+
 /* ── 마일스톤 토스트 ── */
 @keyframes toastPop {
   0%   { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.9); }

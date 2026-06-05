@@ -5,6 +5,8 @@ interface Props {
   bestScore: number;
   distanceMeters: number;
   onRestart: () => void;
+  onShowRecords: () => void;
+  onShowRanking: () => void;
 }
 
 export function GameOverModal({
@@ -12,6 +14,8 @@ export function GameOverModal({
   bestScore,
   distanceMeters,
   onRestart,
+  onShowRecords,
+  onShowRanking,
 }: Props) {
   const isNewBest = score > 0 && score === bestScore;
 
@@ -58,6 +62,12 @@ export function GameOverModal({
 
         <button style={restartBtn} onClick={onRestart}>
           한 번 더 걸어볼까요? 🚶
+        </button>
+        <button style={rankingBtn} onClick={onShowRanking}>
+          🌍 전체 랭킹 등록
+        </button>
+        <button style={recordsBtn} onClick={onShowRecords}>
+          🏆 내 기록 보기
         </button>
       </div>
     </div>
@@ -159,4 +169,31 @@ const restartBtn: CSSProperties = {
   width: "100%",
   letterSpacing: 0.3,
   boxShadow: "0 4px 16px rgba(61, 174, 121, 0.35)",
+  marginBottom: 10,
+};
+
+const rankingBtn: CSSProperties = {
+  background: "#2D7D52",
+  color: "#fff",
+  border: "none",
+  borderRadius: 50,
+  padding: "13px 0",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  cursor: "pointer",
+  width: "100%",
+  marginBottom: 8,
+  boxShadow: "0 3px 12px rgba(45,125,82,0.3)",
+};
+
+const recordsBtn: CSSProperties = {
+  background: "transparent",
+  color: "#3DAE79",
+  border: "1.5px solid #3DAE79",
+  borderRadius: 50,
+  padding: "12px 0",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  cursor: "pointer",
+  width: "100%",
 };

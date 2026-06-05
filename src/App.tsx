@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useGame } from './hooks/useGame';
 import { GameCanvas } from './components/GameCanvas';
 import { GameHUD } from './components/GameHUD';
@@ -6,6 +6,8 @@ import { GameOverModal } from './components/GameOverModal';
 import { MilestoneToast } from './components/MilestoneToast';
 import { ThemeToast } from './components/ThemeToast';
 import { PowerOverlay } from './components/PowerOverlay';
+import { RecordsModal } from './components/RecordsModal';
+import { RankingModal } from './components/RankingModal';
 import './App.css';
 
 function App() {
@@ -16,6 +18,9 @@ function App() {
     currentTheme, activeMilestone, activeThemeToast,
     startGame, engineRef,
   } = useGame(canvasRef);
+
+  const [showRecords, setShowRecords] = useState(false);
+  const [showRanking, setShowRanking] = useState(false);
 
   return (
     <div className="app">
@@ -52,6 +57,9 @@ function App() {
             <button className="btn-primary" onClick={startGame}>
               걷기 시작 🌿
             </button>
+            <button className="btn-secondary" onClick={() => setShowRecords(true)}>
+              🏆 내 기록 보기
+            </button>
           </div>
         </div>
       )}
@@ -62,6 +70,17 @@ function App() {
           bestScore={bestScore}
           distanceMeters={distanceMeters}
           onRestart={startGame}
+          onShowRecords={() => setShowRecords(true)}
+          onShowRanking={() => setShowRanking(true)}
+        />
+      )}
+
+      {showRecords && <RecordsModal onClose={() => setShowRecords(false)} />}
+      {showRanking && (
+        <RankingModal
+          score={score}
+          distanceMeters={distanceMeters}
+          onClose={() => setShowRanking(false)}
         />
       )}
     </div>

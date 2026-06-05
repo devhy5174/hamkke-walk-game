@@ -3,10 +3,12 @@ import type { RefObject } from 'react';
 import { GameEngine } from '../game/GameEngine';
 import type { GameStats, Milestone } from '../game/types';
 import { type GameTheme, THEMES } from '../game/themes';
+import { saveRecord } from '../utils/records';
 
 export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const engineRef = useRef<GameEngine | null>(null);
   const scoreRef = useRef(0);
+  const distanceRef = useRef(0);
   const milestoneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const themeToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -24,6 +26,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
 
   const handleUpdate = useCallback((stats: GameStats) => {
     scoreRef.current = stats.score;
+    distanceRef.current = stats.distanceMeters;
     setScore(stats.score);
     setGaugeCount(stats.gaugeCount);
     setDistanceMeters(stats.distanceMeters);
@@ -32,8 +35,13 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   }, []);
 
   const handleGameOver = useCallback(() => {
-    setBestScore(prev => Math.max(prev, scoreRef.current));
+    const finalScore = scoreRef.current;
+    const finalDist = distanceRef.current;
+    setBestScore(prev => Math.max(prev, finalScore));
     setGameOver(true);
+    if (finalScore > 0) {
+      saveRecord({ score: finalScore, distanceMeters: finalDist, date: new Date().toISOString() });
+    }
   }, []);
 
   const handleMilestone = useCallback((m: Milestone) => {
