@@ -109,58 +109,82 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
         )}
 
         {/* ── 전체 랭킹 ── */}
-        {step === 'done' && <>
-          <div style={headerArea}>
-            <div style={{ fontSize: '2rem' }}>🌍</div>
-            <h2 style={title}>전체 랭킹</h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#A0B4AC' }}>상위 50위</p>
-          </div>
+        {step === 'done' && (() => {
+          const myIdx = viewOnly
+            ? rankings.findIndex(r => r.nickname === getSavedNickname())
+            : rankings.findIndex(r => r.id === myId);
+          const myEntry = myIdx >= 0 ? rankings[myIdx] : null;
 
-          <div style={rankList}>
-            {/* 컬럼 헤더 */}
-            <div style={{ ...rankRow, background: 'transparent', paddingBottom: 4 }}>
-              <span style={colRankH} />
-              <span style={{ ...colNameH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>닉네임</span>
-              <span style={{ ...colScoreH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>점수</span>
-              <span style={{ ...colDistH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>거리</span>
+          return <>
+            <div style={headerArea}>
+              <div style={{ fontSize: '2rem' }}>🌍</div>
+              <h2 style={title}>전체 랭킹</h2>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#A0B4AC' }}>상위 50위</p>
             </div>
 
-            {rankings.map((r, i) => {
-              const isMe = r.id === myId;
-              return (
-                <div key={r.id} style={{
-                  ...rankRow,
-                  background: isMe ? '#F0FAF5' : i % 2 === 0 ? '#FAFAFA' : 'transparent',
-                  borderRadius: isMe ? 10 : 0,
-                  outline: isMe ? '1.5px solid #A8D5B8' : 'none',
-                  margin: isMe ? '2px 0' : 0,
-                }}>
-                  <span style={colRankH}>
-                    {i < 3
-                      ? <span style={{ fontSize: 18 }}>{MEDALS[i]}</span>
-                      : <span style={{ color: '#A0B4AC', fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
-                    }
-                  </span>
-                  <span style={{ ...colNameH, color: isMe ? '#2D7D52' : '#4A5568', fontWeight: isMe ? 800 : 500 }}>
-                    {r.nickname}{isMe && ' ★'}
-                  </span>
-                  <span style={{ ...colScoreH, color: isMe ? '#3DAE79' : '#4A5568', fontWeight: isMe ? 800 : 600 }}>
-                    {r.score.toLocaleString()}
-                  </span>
-                  <span style={{ ...colDistH, color: isMe ? '#6CB88A' : '#8ABD9E' }}>
-                    {r.distanceMeters}m
-                  </span>
-                </div>
-              );
-            })}
+            {/* 내 순위 요약 */}
+            {myEntry ? (
+              <div style={myRankBar}>
+                <span style={{ fontSize: '0.8rem', color: '#7AAD8E' }}>내 순위</span>
+                <span style={{ fontWeight: 800, color: '#2D7D52', fontSize: '1rem' }}>
+                  전체 {myIdx + 1}위
+                </span>
+                <span style={{ color: '#3DAE79', fontWeight: 700 }}>
+                  {myEntry.score.toLocaleString()}점
+                </span>
+              </div>
+            ) : getSavedNickname() ? (
+              <div style={{ ...myRankBar, justifyContent: 'center' }}>
+                <span style={{ fontSize: '0.82rem', color: '#A0B4AC' }}>50위 밖이에요. 도전해보세요! 🏃</span>
+              </div>
+            ) : null}
 
-            {rankings.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 20, color: '#A0B4AC' }}>첫 번째 기록이에요!</div>
-            )}
-          </div>
+            <div style={rankList}>
+              {/* 컬럼 헤더 */}
+              <div style={{ ...rankRow, background: 'transparent', paddingBottom: 4 }}>
+                <span style={colRankH} />
+                <span style={{ ...colNameH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>닉네임</span>
+                <span style={{ ...colScoreH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>점수</span>
+                <span style={{ ...colDistH, fontSize: 10, color: '#A0B4AC', fontWeight: 600 }}>거리</span>
+              </div>
 
-          <button style={submitBtn} onClick={onClose}>닫기</button>
-        </>}
+              {rankings.map((r, i) => {
+                const isMe = viewOnly ? r.nickname === getSavedNickname() : r.id === myId;
+                return (
+                  <div key={r.id} style={{
+                    ...rankRow,
+                    background: isMe ? '#F0FAF5' : i % 2 === 0 ? '#FAFAFA' : 'transparent',
+                    borderRadius: isMe ? 10 : 0,
+                    outline: isMe ? '1.5px solid #A8D5B8' : 'none',
+                    margin: isMe ? '2px 0' : 0,
+                  }}>
+                    <span style={colRankH}>
+                      {i < 3
+                        ? <span style={{ fontSize: 18 }}>{MEDALS[i]}</span>
+                        : <span style={{ color: '#A0B4AC', fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
+                      }
+                    </span>
+                    <span style={{ ...colNameH, color: isMe ? '#2D7D52' : '#4A5568', fontWeight: isMe ? 800 : 500 }}>
+                      {r.nickname}{isMe && ' ★'}
+                    </span>
+                    <span style={{ ...colScoreH, color: isMe ? '#3DAE79' : '#4A5568', fontWeight: isMe ? 800 : 600 }}>
+                      {r.score.toLocaleString()}
+                    </span>
+                    <span style={{ ...colDistH, color: isMe ? '#6CB88A' : '#8ABD9E' }}>
+                      {r.distanceMeters}m
+                    </span>
+                  </div>
+                );
+              })}
+
+              {rankings.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 20, color: '#A0B4AC' }}>첫 번째 기록이에요!</div>
+              )}
+            </div>
+
+            <button style={submitBtn} onClick={onClose}>닫기</button>
+          </>;
+        })()}
 
       </div>
     </div>
@@ -234,6 +258,18 @@ const cancelBtn: CSSProperties = {
   border: 'none', borderRadius: 50,
   padding: '10px 0', fontSize: '0.9rem', fontWeight: 500,
   cursor: 'pointer', width: '100%', marginTop: 4,
+};
+
+const myRankBar: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  background: '#F0FAF5',
+  border: '1.5px solid #A8D5B8',
+  borderRadius: 12,
+  padding: '8px 14px',
+  marginBottom: 10,
+  gap: 8,
 };
 
 const rankList: CSSProperties = {
