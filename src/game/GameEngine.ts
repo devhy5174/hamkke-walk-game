@@ -429,10 +429,11 @@ export class GameEngine {
       this.obsTimer = 0;
       const obs = makeObstacle(width);
       const tid = getThemeByDistance(this.distanceMeters).id;
-      // 다람쥐(숲길)·등산객(산길) → dodger 타입으로 표시, 실제 도망은 플레이어 감지 후
+      // 다람쥐(숲길)·등산객(산길) → 50% dodger, 50% 정적 웅덩이
       if (
         obs.variant === "puddle" &&
-        (tid === "forest" || tid === "mountain")
+        (tid === "forest" || tid === "mountain") &&
+        Math.random() < 0.5
       ) {
         obs.style = "dodger";
         obs.dodgerType = tid === "forest" ? "squirrel" : "hiker";
@@ -509,7 +510,7 @@ export class GameEngine {
             obs.driftVx = dir * (60 + Math.random() * 25);
             if (obs.dodgerType === "squirrel")
               this.onDodger?.("앗! 다람쥐다! 🐿️");
-            if (obs.dodgerType === "hiker") this.onDodger?.("먼저 가세요~! 🙋");
+            if (obs.dodgerType === "hiker") this.onDodger?.("안녕하세요! 🙋");
           }
         }
         // 도망 중: 가속하면서 옆으로
@@ -982,7 +983,9 @@ export class GameEngine {
 
   private drawPuddle(x: number, y: number, w: number, h: number) {
     const tid = getThemeByDistance(this.distanceMeters).id;
-    const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs["park"];
+    // 숲·산 테마의 obsPuddleImgs는 캐릭터(다람쥐·등산객) 이미지라 정적 웅덩이엔 공원 웅덩이 사용
+    const staticTid = (tid === "forest" || tid === "mountain") ? "park" : tid;
+    const img = this.obsPuddleImgs[staticTid] ?? this.obsPuddleImgs["park"];
     const { ctx } = this;
     ctx.save();
     ctx.shadowColor = "rgba(40,40,40,0.7)";
