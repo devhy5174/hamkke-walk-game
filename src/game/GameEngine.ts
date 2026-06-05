@@ -32,10 +32,17 @@ import { hitFootprint, hitWaterBottle, hitObstacle } from "./collision";
 import { type GameTheme, THEMES, getThemeByDistance } from "./themes";
 import { renderBackground, renderDecorations } from "./themeRenderer";
 import { audioManager } from "../utils/audio";
-import footprintSrc from "../assets/images/item-footprint.png";
-import waterBottleSrc from "../assets/images/item-water-bottle.png";
-import rockSrc from "../assets/images/obstacle-rock.png";
-import puddleSrc from "../assets/images/obstacle-puddle.png";
+import footprintSrc from '../assets/images/item-footprint.png';
+import waterBottleSrc from '../assets/images/item-water-bottle.png';
+
+// 장애물 이미지 — 돌(공통) + 테마별 두 번째 장애물
+import obsParRock   from '../assets/images/obstacles/obs-park-rock.png';    // 돌 (공통)
+import obsParPuddle from '../assets/images/obstacles/obs-park-puddle.png';  // 공원: 웅덩이
+import obsForPuddle from '../assets/images/obstacles/obs-forest-puddle.png'; // 숲길: 다람쥐
+import obsAutRock   from '../assets/images/obstacles/obs-autumn-rock.png';  // 단풍: 낙엽
+import obsCheRock   from '../assets/images/obstacles/obs-cherry-rock.png';  // 벚꽃: 꽃잎
+import obsSnoRock   from '../assets/images/obstacles/obs-snow-rock.png';    // 눈길: 눈사람
+import obsMtnRock   from '../assets/images/obstacles/obs-mountain-rock.png'; // 산길: 등산객
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -69,10 +76,21 @@ export class GameEngine {
   moveDx = 0;
 
   private characterImg: HTMLImageElement | null = null;
-  private readonly footprintImg = GameEngine.loadImg(footprintSrc);
-  private readonly waterBottleImg = GameEngine.loadImg(waterBottleSrc);
-  private readonly rockImg = GameEngine.loadImg(rockSrc);
-  private readonly puddleImg = GameEngine.loadImg(puddleSrc);
+  private readonly footprintImg    = GameEngine.loadImg(footprintSrc);
+  private readonly waterBottleImg  = GameEngine.loadImg(waterBottleSrc);
+
+  // 돌: 모든 테마에서 동일한 기본 돌 사용
+  private readonly rockImg = GameEngine.loadImg(obsParRock);
+
+  // 테마별 두 번째 장애물 (공원=웅덩이, 그 외=테마 캐릭터)
+  private readonly obsPuddleImgs: Record<string, HTMLImageElement> = {
+    park:     GameEngine.loadImg(obsParPuddle),
+    forest:   GameEngine.loadImg(obsForPuddle),  // 다람쥐
+    autumn:   GameEngine.loadImg(obsAutRock),    // 단풍낙엽
+    cherry:   GameEngine.loadImg(obsCheRock),    // 벚꽃낙엽
+    snow:     GameEngine.loadImg(obsSnoRock),    // 눈사람
+    mountain: GameEngine.loadImg(obsMtnRock),    // 등산객
+  };
 
   private static loadImg(src: string): HTMLImageElement {
     const img = new Image();
@@ -92,6 +110,9 @@ export class GameEngine {
   private onGameOver: () => void;
   private onMilestone: (m: Milestone) => void;
   private onThemeChange: (theme: GameTheme) => void;
+  private onDodger: ((msg: string) => void) | null = null;
+
+  setDodgerCallback(cb: (msg: string) => void) { this.onDodger = cb; }
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -259,7 +280,16 @@ export class GameEngine {
     this.obsTimer += dtSec * 1000;
     if (this.obsTimer >= OBSTACLE_SPAWN_MS / sm) {
       this.obsTimer = 0;
-      this.obstacles.push(makeObstacle(width));
+      const obs = makeObstacle(width);
+      const tid = getThemeByDistance(this.distanceMeters).id;
+      // 다람쥐(숲길)·등산객(산길) → dodger 타입으로 표시, 실제 도망은 플레이어 감지 후
+      if (obs.variant === 'puddle' && (tid === 'forest' || tid === 'mountain')) {
+        obs.style = 'dodger';
+        obs.dodgerType = tid === 'forest' ? 'squirrel' : 'hiker';
+        obs.driftVx = 0;
+        obs.noticed = false;
+      }
+      this.obstacles.push(obs);
     }
 
     const itemSpeed = WATER_BASE_SPEED * sm * boost * dtSec;
@@ -296,19 +326,44 @@ export class GameEngine {
 
     // 장애물 이동 + 충돌 (파워모드 중 무적)
     const obsSpeed = OBSTACLE_BASE_SPEED * sm * boost * dtSec;
-    for (const obs of this.obstacles) obs.y += obsSpeed;
+    const tid = getThemeByDistance(this.distanceMeters).id;
 
-    if (
-      !this.isPowerMode &&
-      this.obstacles.some((obs) => hitObstacle(player, obs))
-    ) {
+    for (const obs of this.obstacles) {
+      obs.y += obsSpeed;
+
+      if (obs.style === 'dodger') {
+        // 아직 발견 전: 플레이어와 거리 체크
+        if (!obs.noticed) {
+          const dy = player.y - obs.y;
+          if (dy > 0 && dy < 190) {
+            // 발견! 도망 시작
+            obs.noticed = true;
+            obs.noticedAt = this.aliveTime;
+            obs.driftVx = (Math.random() > 0.5 ? 1 : -1) * (60 + Math.random() * 25);
+            if (obs.dodgerType === 'squirrel') this.onDodger?.('앗! 다람쥐다! 🐿️');
+            if (obs.dodgerType === 'hiker')   this.onDodger?.('안녕하세요! 🙋');
+          }
+        }
+        // 도망 중: 가속하면서 옆으로
+        if (obs.noticed && obs.driftVx) {
+          obs.x += obs.driftVx * sm * dtSec;
+        }
+      }
+    }
+
+    // dodger는 충돌 판정 제외
+    const collidable = this.obstacles.filter(o => o.style !== 'dodger');
+    if (!this.isPowerMode && collidable.some(obs => hitObstacle(player, obs))) {
       this.running = false;
       this.render();
       this.onGameOver();
       return;
     }
     this.obstacles = this.obstacles.filter(
-      (obs) => obs.y < this.canvas.height + obs.height,
+      obs =>
+        obs.y < this.canvas.height + obs.height &&
+        obs.x > -obs.width - 80 &&
+        obs.x < this.canvas.width + 80,
     );
   }
 
@@ -345,9 +400,13 @@ export class GameEngine {
 
     // ── 장애물 ──
     for (const obs of this.obstacles) {
-      if (obs.variant === "rock")
+      if (obs.variant === 'rock') {
         this.drawRock(obs.x, obs.y, obs.width, obs.height);
-      else this.drawPuddle(obs.x, obs.y, obs.width, obs.height);
+      } else if (obs.style === 'dodger') {
+        this.drawDodgingObstacle(obs);
+      } else {
+        this.drawPuddle(obs.x, obs.y, obs.width, obs.height);
+      }
     }
 
     // ── 파워모드 불꽃 효과 (플레이어 뒤) ──
@@ -529,65 +588,76 @@ export class GameEngine {
     ctx.restore();
   }
 
-  private drawRock(x: number, y: number, w: number, h: number) {
+  private drawDodgingObstacle(obs: Obstacle) {
     const { ctx } = this;
-    const cx = x + w / 2,
-      cy = y + h / 2;
-    ctx.drawImage(this.rockImg, x, y, w, h);
-    // 상단 하이라이트
+    const tid = getThemeByDistance(this.distanceMeters).id;
+    const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs['park'];
+    const { x, y, width: w, height: h, noticed, noticedAt, driftVx } = obs;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const t = this.aliveTime;
+
+    // 발견 전: 천천히 둥실 / 발견 후: 통통 튀면서 도망
+    const elapsed = noticed && noticedAt !== undefined ? t - noticedAt : -1;
+    const bob = noticed
+      ? -Math.abs(Math.sin(elapsed * 14)) * 10  // 통통 바운스 (위로 튐)
+      : Math.sin(t * 2.5 + obs.id * 1.8) * 3;  // 잔잔한 float
+    const tilt = noticed && driftVx
+      ? (driftVx > 0 ? 0.22 : -0.22)
+      : 0;
+
+    // 이미지
     ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.beginPath();
-    ctx.ellipse(
-      cx - w * 0.18,
-      cy - h * 0.2,
-      w * 0.18,
-      h * 0.14,
-      -0.5,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
+    ctx.translate(cx, cy + bob);
+    ctx.rotate(tilt);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
     ctx.restore();
+
+    // 발견 직후 반응 텍스트 — 0.8초 동안 떠오르며 사라짐
+    if (noticed && elapsed >= 0 && elapsed < 0.8) {
+      const alpha = 1 - elapsed / 0.8;
+      const rise = elapsed * 22;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = 'center';
+
+      if (obs.dodgerType === 'hiker') {
+        // 등산객: "먼저 가세요~!" 말풍선 스타일
+        const text = '먼저 가세요~!';
+        ctx.font = 'bold 13px sans-serif';
+        const tw = ctx.measureText(text).width;
+        const bx = cx - tw / 2 - 8;
+        const by = y - 44 - rise;
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, tw + 16, 24, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#2D7D52';
+        ctx.fillText(text, cx, by + 16);
+      } else {
+        // 다람쥐: "!" 표시
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#FFD600';
+        ctx.strokeStyle = '#AA8000';
+        ctx.lineWidth = 3;
+        ctx.strokeText('!', cx, y - 10 - rise);
+        ctx.fillText('!', cx, y - 10 - rise);
+      }
+      ctx.restore();
+    }
+  }
+
+  private drawRock(x: number, y: number, w: number, h: number) {
+    // 돌은 모든 테마에서 동일
+    this.ctx.drawImage(this.rockImg, x, y, w, h);
   }
 
   private drawPuddle(x: number, y: number, w: number, h: number) {
-    const { ctx } = this;
-    const cx = x + w / 2,
-      cy = y + h / 2;
-    const rx = w / 2,
-      ry = h / 2;
-    // 이미지 (채도 증가) — 웅덩이는 바닥 자체라 그림자/외곽선 없음
-    ctx.save();
-    ctx.filter = "saturate(1.9) brightness(1.08)";
-    ctx.drawImage(this.puddleImg, x, y, w, h);
-    ctx.restore();
-    // 물 반짝임
-    ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,0.48)";
-    ctx.beginPath();
-    ctx.ellipse(
-      cx - rx * 0.22,
-      cy - ry * 0.18,
-      rx * 0.24,
-      ry * 0.32,
-      -0.3,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.22)";
-    ctx.beginPath();
-    ctx.ellipse(
-      cx + rx * 0.18,
-      cy + ry * 0.08,
-      rx * 0.1,
-      ry * 0.18,
-      0.2,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-    ctx.restore();
+    const tid = getThemeByDistance(this.distanceMeters).id;
+    const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs['park'];
+    this.ctx.drawImage(img, x, y, w, h);
   }
 }

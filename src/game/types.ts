@@ -26,6 +26,11 @@ export interface Obstacle {
   width: number;
   height: number;
   variant: 'rock' | 'puddle';
+  style?: 'dodger';
+  dodgerType?: 'squirrel' | 'hiker';
+  driftVx?: number;
+  noticed?: boolean;
+  noticedAt?: number;
 }
 
 export interface GameStats {

@@ -9,6 +9,7 @@ import { PowerOverlay } from './components/PowerOverlay';
 import { RecordsModal } from './components/RecordsModal';
 import { RankingModal } from './components/RankingModal';
 import { CharacterSelect } from './components/CharacterSelect';
+import { SpeechBubble } from './components/SpeechBubble';
 import { CHARACTERS, getSavedCharId, saveCharId } from './game/characters';
 import './App.css';
 
@@ -17,7 +18,7 @@ function App() {
   const {
     score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft,
     bestScore, gameEnded, gameOver, isStarted,
-    currentTheme, activeMilestone, activeThemeToast,
+    currentTheme, activeMilestone, activeThemeToast, dodgerMsg,
     startGame, showResult, engineRef,
   } = useGame(canvasRef);
 
@@ -55,6 +56,7 @@ function App() {
           currentTheme={currentTheme}
         />
       )}
+      {isStarted && <SpeechBubble message={dodgerMsg} />}
       {isStarted && <MilestoneToast milestone={activeMilestone} />}
       {isStarted && <ThemeToast theme={activeThemeToast} />}
       {isStarted && <PowerOverlay isPowerMode={isPowerMode} powerTimeLeft={powerTimeLeft} />}

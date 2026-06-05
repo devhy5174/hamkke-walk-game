@@ -25,6 +25,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null);
   const [currentTheme, setCurrentTheme] = useState<GameTheme>(THEMES[0]);
   const [activeThemeToast, setActiveThemeToast] = useState<GameTheme | null>(null);
+  const [dodgerMsg, setDodgerMsg] = useState<string | null>(null);
+  const dodgerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUpdate = useCallback((stats: GameStats) => {
     scoreRef.current = stats.score;
@@ -60,6 +62,15 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     }, 2800);
   }, []);
 
+  const handleDodger = useCallback((msg: string) => {
+    if (dodgerTimer.current) clearTimeout(dodgerTimer.current);
+    setDodgerMsg(msg);
+    dodgerTimer.current = setTimeout(() => {
+      setDodgerMsg(null);
+      dodgerTimer.current = null;
+    }, 2500);
+  }, []);
+
   const handleThemeChange = useCallback((theme: GameTheme) => {
     setCurrentTheme(theme);
     if (themeToastTimer.current) clearTimeout(themeToastTimer.current);
@@ -83,6 +94,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     engineRef.current?.stop();
     engineRef.current = new GameEngine(canvas, handleUpdate, handleGameOver, handleMilestone, handleThemeChange);
     if (charSrc) engineRef.current.setCharacter(charSrc);
+    engineRef.current.setDodgerCallback(handleDodger);
 
     scoreRef.current = 0;
     setScore(0);
@@ -100,7 +112,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   return {
     score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft,
     bestScore, gameEnded, gameOver, isStarted,
-    currentTheme, activeMilestone, activeThemeToast,
+    currentTheme, activeMilestone, activeThemeToast, dodgerMsg,
     startGame, showResult, engineRef,
   };
 }

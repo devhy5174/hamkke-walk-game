@@ -94,6 +94,47 @@
   background: rgba(61, 174, 121, 0.08);
 }
 
+/* ── 캐릭터 말풍선 ── */
+@keyframes bubblePop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.82) translateY(6px); }
+  14%  { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  72%  { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(-4px); }
+}
+
+.speech-bubble {
+  position: absolute;
+  bottom: 27%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 15;
+  animation: bubblePop 2.4s ease forwards;
+  white-space: nowrap;
+}
+
+.speech-bubble-inner {
+  background: #fff;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2D7D52;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.14);
+  position: relative;
+}
+
+.speech-bubble-inner::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #fff;
+}
+
 /* ── 마일스톤 토스트 ── */
 @keyframes toastPop {
   0%   { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.9); }
