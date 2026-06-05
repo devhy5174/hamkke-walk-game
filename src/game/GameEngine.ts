@@ -114,6 +114,7 @@ export class GameEngine {
 
   private characterImg: HTMLImageElement | null = null;
   private readonly footprintImg    = GameEngine.loadImg(footprintSrc);
+  private footprintColorized: HTMLCanvasElement | null = null;
   private readonly waterBottleImg  = GameEngine.loadImg(waterBottleSrc);
 
   // 돌: 숲·산은 그루터기, 나머지는 기본 돌
@@ -683,13 +684,48 @@ export class GameEngine {
   private drawClockItem(cx: number, cy: number, r: number) {
     const { ctx } = this;
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.22)';
-    ctx.shadowBlur = 6;
-    ctx.font = `${r * 2.1}px serif`;
+    // 흰 배경 원 (눈에 잘 띄도록)
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.15, 0, Math.PI * 2);
+    ctx.fill();
+    // 이모지
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.font = `${r * 2}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('⏱️', cx, cy);
     ctx.restore();
+  }
+
+  // 발자국 이미지를 카키색으로 1회 변환 후 캐시 (모든 기기 호환)
+  private getColorizedFootprint(): HTMLCanvasElement | HTMLImageElement {
+    if (this.footprintColorized) return this.footprintColorized;
+    if (!this.footprintImg.complete || !this.footprintImg.naturalWidth) return this.footprintImg;
+
+    const size = 128;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = size;
+    offscreen.height = size;
+    const oc = offscreen.getContext('2d')!;
+    oc.drawImage(this.footprintImg, 0, 0, size, size);
+
+    const data = oc.getImageData(0, 0, size, size);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] > 20) {       // 투명하지 않은 픽셀만 카키색으로
+        d[i]     = 80;            // R
+        d[i + 1] = 68;            // G
+        d[i + 2] = 38;            // B  → 진카키 #50441E
+      }
+    }
+    oc.putImageData(data, 0, 0);
+    this.footprintColorized = offscreen;
+    return this.footprintColorized;
   }
 
   private drawFootprint(cx: number, cy: number, r: number) {
@@ -697,37 +733,19 @@ export class GameEngine {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const isDark = tid === 'forest' || tid === 'mountain';
 
-    ctx.save();
-
-    // 어두운 테마: 흰 글로우 원 (뒤에 깔기)
+    // 어두운 길(숲·산): 흰 후광으로 가시성 확보
     if (isDark) {
-      ctx.globalAlpha = 0.38;
+      ctx.save();
+      ctx.globalAlpha = 0.5;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.18, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r * 1.3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.restore();
     }
 
-    // 배경 원
-    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.26)' : 'rgba(255,235,200,0.22)';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.95, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 원형 클리핑 후 이미지 + 진회색 오버레이
-    // ctx.filter 미지원 환경(카톡 인앱 등) 대응 → globalCompositeOperation 사용
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.clip();
-
-    ctx.drawImage(this.footprintImg, cx - r, cy - r, r * 2, r * 2);
-
-    ctx.globalCompositeOperation = 'source-atop';
-    ctx.fillStyle = 'rgba(35, 35, 35, 0.88)'; // 진회색 덮기
-    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-
-    ctx.restore();
+    // 카키색 발자국 이미지 (배경 없이)
+    ctx.drawImage(this.getColorizedFootprint(), cx - r, cy - r, r * 2, r * 2);
   }
 
   private drawWaterBottle(cx: number, cy: number, r: number) {
@@ -784,8 +802,10 @@ export class GameEngine {
       ? (driftVx > 0 ? 0.22 : -0.22)
       : 0;
 
-    // 이미지
+    // 이미지 + 이미지 형태 따라가는 테두리 (shadow trick)
     ctx.save();
+    ctx.shadowColor = 'rgba(40,40,40,0.65)';
+    ctx.shadowBlur = 4;
     ctx.translate(cx, cy + bob);
     ctx.rotate(tilt);
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
@@ -832,12 +852,21 @@ export class GameEngine {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const img = this.obsRockByTheme[tid] ?? this.obsRockByTheme['default'];
     const { ctx } = this;
+    ctx.save();
+    ctx.shadowColor = 'rgba(40,40,40,0.7)';
+    ctx.shadowBlur = 4;
     ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
   }
 
   private drawPuddle(x: number, y: number, w: number, h: number) {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs['park'];
-    this.ctx.drawImage(img, x, y, w, h);
+    const { ctx } = this;
+    ctx.save();
+    ctx.shadowColor = 'rgba(40,40,40,0.7)';
+    ctx.shadowBlur = 4;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
   }
 }
