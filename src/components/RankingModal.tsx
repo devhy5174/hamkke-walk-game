@@ -122,23 +122,6 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
               <p style={{ margin: 0, fontSize: '0.8rem', color: '#A0B4AC' }}>상위 50위</p>
             </div>
 
-            {/* 내 순위 요약 */}
-            {myEntry ? (
-              <div style={myRankBar}>
-                <span style={{ fontSize: '0.8rem', color: '#7AAD8E' }}>내 순위</span>
-                <span style={{ fontWeight: 800, color: '#2D7D52', fontSize: '1rem' }}>
-                  전체 {myIdx + 1}위
-                </span>
-                <span style={{ color: '#3DAE79', fontWeight: 700 }}>
-                  {myEntry.score.toLocaleString()}점
-                </span>
-              </div>
-            ) : getSavedNickname() ? (
-              <div style={{ ...myRankBar, justifyContent: 'center' }}>
-                <span style={{ fontSize: '0.82rem', color: '#A0B4AC' }}>50위 밖이에요. 도전해보세요! 🏃</span>
-              </div>
-            ) : null}
-
             <div style={rankList}>
               {/* 컬럼 헤더 */}
               <div style={{ ...rankRow, background: 'transparent', paddingBottom: 4 }}>
@@ -181,6 +164,23 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                 <div style={{ textAlign: 'center', padding: 20, color: '#A0B4AC' }}>첫 번째 기록이에요!</div>
               )}
             </div>
+
+            {/* 내 순위 요약 */}
+            {myEntry ? (
+              <div style={myRankBar}>
+                <span style={{ fontSize: '0.8rem', color: '#7AAD8E' }}>내 순위</span>
+                <span style={{ fontWeight: 800, color: '#2D7D52', fontSize: '1rem' }}>
+                  전체 {myIdx + 1}위
+                </span>
+                <span style={{ color: '#3DAE79', fontWeight: 700 }}>
+                  {myEntry.score.toLocaleString()}점
+                </span>
+              </div>
+            ) : getSavedNickname() ? (
+              <div style={{ ...myRankBar, justifyContent: 'center' }}>
+                <span style={{ fontSize: '0.82rem', color: '#A0B4AC' }}>50위 밖이에요. 도전해보세요! 🏃</span>
+              </div>
+            ) : null}
 
             <button style={submitBtn} onClick={onClose}>닫기</button>
           </>;
