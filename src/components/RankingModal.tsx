@@ -136,10 +136,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                 return (
                   <div key={r.id} style={{
                     ...rankRow,
-                    background: isMe ? '#F0FAF5' : i % 2 === 0 ? '#FAFAFA' : 'transparent',
-                    borderRadius: isMe ? 10 : 0,
-                    outline: isMe ? '1.5px solid #A8D5B8' : 'none',
-                    margin: isMe ? '2px 0' : 0,
+                    background: i % 2 === 0 ? '#FAFAFA' : 'transparent',
                   }}>
                     <span style={colRankH}>
                       {i < 3
@@ -147,13 +144,13 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                         : <span style={{ color: '#A0B4AC', fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
                       }
                     </span>
-                    <span style={{ ...colNameH, color: isMe ? '#2D7D52' : '#4A5568', fontWeight: isMe ? 800 : 500 }}>
-                      {r.nickname}{isMe && ' ★'}
+                    <span style={{ ...colNameH, color: '#4A5568' }}>
+                      {isMe && <span style={{ color: '#3DAE79', marginRight: 2 }}>★</span>}{r.nickname}
                     </span>
-                    <span style={{ ...colScoreH, color: isMe ? '#3DAE79' : '#4A5568', fontWeight: isMe ? 800 : 600 }}>
+                    <span style={{ ...colScoreH, color: '#4A5568', fontWeight: 600 }}>
                       {r.score.toLocaleString()}
                     </span>
-                    <span style={{ ...colDistH, color: isMe ? '#6CB88A' : '#8ABD9E' }}>
+                    <span style={{ ...colDistH, color: '#8ABD9E' }}>
                       {r.distanceMeters}m
                     </span>
                   </div>
@@ -268,7 +265,7 @@ const myRankBar: CSSProperties = {
   border: '1.5px solid #A8D5B8',
   borderRadius: 12,
   padding: '8px 14px',
-  marginBottom: 10,
+  marginTop: 10,
   gap: 8,
 };
 
