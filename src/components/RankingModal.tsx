@@ -47,6 +47,9 @@ export function RankingModal({ score, distanceMeters, onClose }: Props) {
       console.error('[Firebase 에러]', e);
       if (e instanceof Error && e.message === 'NICKNAME_TAKEN') {
         setError('다른 사람이 사용 중인 닉네임이에요. 다른 이름을 써주세요!');
+      } else if (e instanceof Error && e.message.startsWith('SCORE_NOT_BEATEN:')) {
+        const best = Number(e.message.split(':')[1]).toLocaleString();
+        setError(`이미 더 높은 기록이 등록되어 있어요! (최고: ${best}점)`);
       } else {
         setError('등록에 실패했어요. 인터넷 연결을 확인해주세요.');
       }

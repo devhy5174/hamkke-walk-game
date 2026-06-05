@@ -41,7 +41,15 @@ export async function upsertRanking(
       throw new Error('NICKNAME_TAKEN');
     }
 
-    // 내 기기 → 기록 업데이트
+    let existingScore = 0;
+    snapshot.forEach(child => { existingScore = child.val().score ?? 0; });
+
+    // 기존 최고기록보다 낮으면 업데이트 거부
+    if (score <= existingScore) {
+      throw new Error(`SCORE_NOT_BEATEN:${existingScore}`);
+    }
+
+    // 내 기기 + 신기록 → 업데이트
     await set(ref(db, `rankings/${existingKey}`), {
       nickname, score, distanceMeters, deviceId,
       date: new Date().toISOString(),
