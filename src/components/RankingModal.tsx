@@ -145,7 +145,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
                       }
                     </span>
                     <span style={{ ...colNameH, color: '#4A5568' }}>
-                      {isMe && <span style={{ color: '#3DAE79', marginRight: 2 }}>★</span>}{r.nickname}
+                      {r.nickname}{isMe && <span style={{ color: '#3DAE79', marginLeft: 2 }}>★</span>}
                     </span>
                     <span style={{ ...colScoreH, color: '#4A5568', fontWeight: 600 }}>
                       {r.score.toLocaleString()}
