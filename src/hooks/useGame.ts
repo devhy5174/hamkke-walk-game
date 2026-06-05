@@ -19,6 +19,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [isPowerMode, setIsPowerMode] = useState(false);
   const [powerTimeLeft, setPowerTimeLeft] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [gameEnded, setGameEnded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
   const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null);
@@ -39,11 +40,15 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     const finalScore = scoreRef.current;
     const finalDist = distanceRef.current;
     setBestScore(prev => Math.max(prev, finalScore));
-    setGameOver(true);
     audioManager.stopBGM();
     if (finalScore > 0) {
       saveRecord({ score: finalScore, distanceMeters: finalDist, date: new Date().toISOString() });
     }
+    setGameEnded(true); // 화면 고정 + 오버레이
+  }, []);
+
+  const showResult = useCallback(() => {
+    setGameOver(true); // 결과 팝업
   }, []);
 
   const handleMilestone = useCallback((m: Milestone) => {
@@ -85,6 +90,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     setDistanceMeters(0);
     setIsPowerMode(false);
     setPowerTimeLeft(0);
+    setGameEnded(false);
     setGameOver(false);
     setIsStarted(true);
     engineRef.current.start();
@@ -93,8 +99,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
 
   return {
     score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft,
-    bestScore, gameOver, isStarted,
+    bestScore, gameEnded, gameOver, isStarted,
     currentTheme, activeMilestone, activeThemeToast,
-    startGame, engineRef,
+    startGame, showResult, engineRef,
   };
 }

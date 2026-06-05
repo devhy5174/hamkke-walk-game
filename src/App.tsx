@@ -16,9 +16,9 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const {
     score, gaugeCount, distanceMeters, isPowerMode, powerTimeLeft,
-    bestScore, gameOver, isStarted,
+    bestScore, gameEnded, gameOver, isStarted,
     currentTheme, activeMilestone, activeThemeToast,
-    startGame, engineRef,
+    startGame, showResult, engineRef,
   } = useGame(canvasRef);
 
   const [showRecords, setShowRecords] = useState(false);
@@ -91,6 +91,34 @@ function App() {
             <button className="btn-secondary" onClick={() => setShowRecords(true)}>
               🏆 내 기록 보기
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 게임 종료 오버레이 — 화면 보다가 탭하면 결과 팝업 */}
+      {gameEnded && !gameOver && (
+        <div onClick={showResult} style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.32)',
+          backdropFilter: 'blur(2px)',
+          zIndex: 30,
+        }}>
+          <div style={{
+            textAlign: 'center',
+            color: '#fff',
+            padding: '28px 36px',
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.22)',
+          }}>
+            <div style={{ fontSize: '2.4rem', marginBottom: 8 }}>🌿</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: 6, letterSpacing: -0.3 }}>
+              오늘도 잘 걸었어요!
+            </div>
+            <div style={{ fontSize: '0.85rem', opacity: 0.75, fontWeight: 500 }}>
+              탭해서 결과 확인
+            </div>
           </div>
         </div>
       )}
