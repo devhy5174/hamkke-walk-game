@@ -682,22 +682,36 @@ export class GameEngine {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const isDark = tid === 'forest' || tid === 'mountain';
 
-    // 투명 배경 원 (어두운 테마에서 더 밝게)
     ctx.save();
-    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.32)' : 'rgba(255,235,200,0.22)';
+
+    // 어두운 테마: 흰 글로우 원 (뒤에 깔기)
+    if (isDark) {
+      ctx.globalAlpha = 0.38;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 1.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // 배경 원
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.26)' : 'rgba(255,235,200,0.22)';
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.95, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
 
-    // 발자국 (어두운 테마에서 흰 글로우 추가)
-    ctx.save();
-    ctx.filter = 'grayscale(1) brightness(0.28)';
-    if (isDark) {
-      ctx.shadowColor = 'rgba(255,255,255,0.72)';
-      ctx.shadowBlur = 12;
-    }
+    // 원형 클리핑 후 이미지 + 진회색 오버레이
+    // ctx.filter 미지원 환경(카톡 인앱 등) 대응 → globalCompositeOperation 사용
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+
     ctx.drawImage(this.footprintImg, cx - r, cy - r, r * 2, r * 2);
+
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = 'rgba(35, 35, 35, 0.88)'; // 진회색 덮기
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
     ctx.restore();
   }
 
@@ -757,7 +771,6 @@ export class GameEngine {
 
     // 이미지
     ctx.save();
-    ctx.filter = 'saturate(1.4) contrast(1.1) brightness(1.05)';
     ctx.translate(cx, cy + bob);
     ctx.rotate(tilt);
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
@@ -804,19 +817,12 @@ export class GameEngine {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const img = this.obsRockByTheme[tid] ?? this.obsRockByTheme['default'];
     const { ctx } = this;
-    ctx.save();
-    ctx.filter = 'saturate(1.5) contrast(1.15) brightness(1.05)';
     ctx.drawImage(img, x, y, w, h);
-    ctx.restore();
   }
 
   private drawPuddle(x: number, y: number, w: number, h: number) {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs['park'];
-    const { ctx } = this;
-    ctx.save();
-    ctx.filter = 'saturate(1.5) contrast(1.15) brightness(1.05)';
-    ctx.drawImage(img, x, y, w, h);
-    ctx.restore();
+    this.ctx.drawImage(img, x, y, w, h);
   }
 }
