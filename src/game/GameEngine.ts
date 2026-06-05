@@ -938,8 +938,9 @@ export class GameEngine {
 
   private drawDodgingObstacle(obs: Obstacle) {
     const { ctx } = this;
-    const tid = getThemeByDistance(this.distanceMeters).id;
-    const img = this.obsPuddleImgs[tid] ?? this.obsPuddleImgs["park"];
+    // 스폰 당시 테마 이미지를 dodgerType으로 고정 (테마 전환 시 이미지 바뀌는 버그 방지)
+    const imgKey = obs.dodgerType === "squirrel" ? "forest" : obs.dodgerType === "hiker" ? "bamboo" : "park";
+    const img = this.obsPuddleImgs[imgKey] ?? this.obsPuddleImgs["park"];
     const { x, y, width: w, height: h, noticed, noticedAt, driftVx } = obs;
     const cx = x + w / 2;
     const cy = y + h / 2;
