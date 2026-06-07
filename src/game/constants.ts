@@ -44,6 +44,9 @@ export const SPEED_RAMP = 0.03;
 // 거리 기본 배율 — 2.5m/s 기준으로 테마 구간을 빠르게 경험
 export const DISTANCE_SPEED = 2.5;
 
+// 달빛길 보너스 타이머 (초)
+export const MOONLIGHT_DURATION = 90;
+
 // 마일스톤 — 거리 배율에 맞게 조정
 export const MILESTONES: Milestone[] = [
   { distance: 50, emoji: "🚶", label: "산책 시작" },

@@ -29,9 +29,15 @@ export function GameOverModal({
           {isNewBest ? "신기록이에요!" : "잘 걸었어요!"}
         </h2>
         <p style={subtitleStyle}>
-          {isNewBest
-            ? "최고 기록을 갱신했어요 🎉"
-            : <>오늘도 함께 걸어줘서 고마워요<br />이젠 진짜로 걸어볼까요?</>}
+          {isNewBest ? (
+            "최고 기록을 갱신했어요 🎉"
+          ) : (
+            <>
+              오늘도 함께 걸어줘서 고마워요
+              <br />
+              이젠 진짜로 걸어볼까요?
+            </>
+          )}
         </p>
 
         {/* 거리 - 메인 성취 지표 */}

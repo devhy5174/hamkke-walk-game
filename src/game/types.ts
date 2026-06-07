@@ -48,6 +48,7 @@ export interface GameStats {
   powerTimeLeft: number;
   isSlowMode: boolean;
   slowTimeLeft: number;
+  moonlightTimeLeft: number;
 }
 
 export interface Milestone {

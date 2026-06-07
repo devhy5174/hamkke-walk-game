@@ -35,6 +35,8 @@ function App() {
     startGame,
     showResult,
     engineRef,
+    isComplete,
+    moonlightTimeLeft,
   } = useGame(canvasRef);
 
   const [showRecords, setShowRecords] = useState(false);
@@ -74,6 +76,7 @@ function App() {
           isSlowMode={isSlowMode}
           slowTimeLeft={slowTimeLeft}
           currentTheme={currentTheme}
+          moonlightTimeLeft={moonlightTimeLeft}
         />
       )}
       {isStarted && (
@@ -92,7 +95,7 @@ function App() {
       {!isStarted && (
         <div className="overlay">
           <div className="start-card">
-            <h1 className="game-title">함께Walk</h1>
+            <h1 className="game-title">산책길 모험</h1>
             <p className="game-desc">
               발자국을 모으고 물병으로 에너지를 충전하며
               <br />
@@ -132,8 +135,39 @@ function App() {
         </div>
       )}
 
+      {/* 달빛길 완주 오버레이 */}
+      {gameEnded && isComplete && !gameOver && (
+        <div
+          onClick={showResult}
+          style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(5,5,30,0.75)",
+            backdropFilter: "blur(4px)", zIndex: 30,
+          }}
+        >
+          <div style={{
+            textAlign: "center", color: "#fff",
+            padding: "32px 40px", borderRadius: 28,
+            background: "rgba(255,215,0,0.1)",
+            border: "1.5px solid rgba(255,215,0,0.4)",
+          }}>
+            <div style={{ fontSize: "2.8rem", marginBottom: 8 }}>🌙✨</div>
+            <div style={{ fontSize: "1.5rem", fontWeight: 800, marginBottom: 6, color: "#FFD700" }}>
+              달빛길 완주!
+            </div>
+            <div style={{ fontSize: "1rem", opacity: 0.85, marginBottom: 4 }}>
+              {score.toLocaleString()}점 · {distanceMeters}m
+            </div>
+            <div style={{ fontSize: "0.82rem", opacity: 0.6, fontWeight: 500 }}>
+              탭해서 결과 확인
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 게임 종료 오버레이 — 화면 보다가 탭하면 결과 팝업 */}
-      {gameEnded && !gameOver && (
+      {gameEnded && !isComplete && !gameOver && (
         <div
           onClick={showResult}
           style={{

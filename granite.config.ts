@@ -3,7 +3,7 @@ import { defineConfig } from "@apps-in-toss/web-framework/config";
 export default defineConfig({
   appName: "hamkke-walk-game",
   brand: {
-    displayName: "함께Walk",
+    displayName: "산책길 모험",
     primaryColor: "#3B82F6",
     icon: "",
   },

@@ -12,6 +12,7 @@ interface Props {
   isSlowMode: boolean;
   slowTimeLeft: number;
   currentTheme: GameTheme;
+  moonlightTimeLeft: number;
 }
 
 export function GameHUD({
@@ -23,6 +24,7 @@ export function GameHUD({
   isSlowMode,
   slowTimeLeft,
   currentTheme,
+  moonlightTimeLeft,
 }: Props) {
   const gaugePct = gaugeCount / GAUGE_CAPACITY;
   const gaugeFull = gaugeCount >= GAUGE_CAPACITY;
@@ -78,6 +80,11 @@ export function GameHUD({
         <div style={{ textAlign: "right" }}>
           <div style={label}>최고</div>
           <div style={{ ...bigNum, color: "#4A5568" }}>{bestScore}</div>
+          {moonlightTimeLeft > 0 && (
+            <div style={{ fontSize: 11, color: '#FFD700', fontWeight: 800, marginTop: 2 }}>
+              🌙 {moonlightTimeLeft}s
+            </div>
+          )}
         </div>
       </div>
     </>

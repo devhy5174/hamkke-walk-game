@@ -30,6 +30,7 @@ import {
   POWER_SCORE_MULT,
   SPEED_RAMP,
   MILESTONES,
+  MOONLIGHT_DURATION,
 } from "./constants";
 import {
   makeFootprint,
@@ -171,6 +172,7 @@ export class GameEngine {
   private nextDistanceScore = 10;
   private reachedMilestones = new Set<number>();
   private currentThemeId = THEMES[0].id;
+  private moonlightTimeLeft = -1; // -1: 미시작
 
   touchX: number | null = null;
   moveDx = 0;
@@ -220,6 +222,8 @@ export class GameEngine {
   private onThemeChange: (theme: GameTheme) => void;
   private onDodger: ((msg: string) => void) | null = null;
   private onPowerMsg: ((msg: string) => void) | null = null;
+  private onComplete: (() => void) | null = null;
+  setCompleteCallback(cb: () => void) { this.onComplete = cb; }
 
   setDodgerCallback(cb: (msg: string) => void) {
     this.onDodger = cb;
@@ -296,6 +300,7 @@ export class GameEngine {
       powerTimeLeft: this.powerTimeLeft,
       isSlowMode: this.isSlowMode,
       slowTimeLeft: this.slowTimeLeft,
+      moonlightTimeLeft: Math.max(0, Math.ceil(this.moonlightTimeLeft)),
     });
   }
 
@@ -400,6 +405,18 @@ export class GameEngine {
     if (newTheme.id !== this.currentThemeId) {
       this.currentThemeId = newTheme.id;
       this.onThemeChange(newTheme);
+    }
+
+    // 달빛길 보너스 타이머
+    if (this.currentThemeId === 'moonlight') {
+      if (this.moonlightTimeLeft < 0) this.moonlightTimeLeft = MOONLIGHT_DURATION;
+      this.moonlightTimeLeft -= dtSec;
+      this.emitUpdate();
+      if (this.moonlightTimeLeft <= 0) {
+        this.running = false;
+        this.onComplete?.();
+        return;
+      }
     }
 
     // 발자국 스폰

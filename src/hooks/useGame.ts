@@ -25,6 +25,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [gameEnded, setGameEnded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [moonlightTimeLeft, setMoonlightTimeLeft] = useState(0);
   const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null);
   const [currentTheme, setCurrentTheme] = useState<GameTheme>(THEMES[0]);
   const [activeThemeToast, setActiveThemeToast] = useState<GameTheme | null>(null);
@@ -41,6 +43,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     setPowerTimeLeft(stats.powerTimeLeft);
     setIsSlowMode(stats.isSlowMode);
     setSlowTimeLeft(stats.slowTimeLeft);
+    setMoonlightTimeLeft(stats.moonlightTimeLeft);
   }, []);
 
   const handleGameOver = useCallback(() => {
@@ -78,14 +81,19 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
 
   const handleThemeChange = useCallback((theme: GameTheme) => {
     setCurrentTheme(theme);
-    unlockTheme(theme.id); // 처음 방문한 테마 도감 해금
+    unlockTheme(theme.id);
+    if (theme.id === 'moonlight') {
+      audioManager.switchToMoonlightBGM();
+      setTimeout(() => handleDodger('믿을 수 없어! 달빛길까지 왔어요! 🌙🎊'), 800);
+      setTimeout(() => handleDodger('황금 발자국을 밟으며 별빛 아래 달려요! ✨'), 4000);
+    }
     if (themeToastTimer.current) clearTimeout(themeToastTimer.current);
     setActiveThemeToast(theme);
     themeToastTimer.current = setTimeout(() => {
       setActiveThemeToast(null);
       themeToastTimer.current = null;
     }, 2800);
-  }, []);
+  }, [handleDodger]);
 
   const startGame = useCallback((charSrc?: string) => {
     const canvas = canvasRef.current;
@@ -101,7 +109,13 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     engineRef.current = new GameEngine(canvas, handleUpdate, handleGameOver, handleMilestone, handleThemeChange);
     if (charSrc) engineRef.current.setCharacter(charSrc);
     engineRef.current.setDodgerCallback(handleDodger);
-    engineRef.current.setPowerMsgCallback(handleDodger); // 말풍선 공유
+    engineRef.current.setPowerMsgCallback(handleDodger);
+    engineRef.current.setCompleteCallback(() => {
+      audioManager.stopBGM();
+      saveRecord({ score: scoreRef.current, distanceMeters: distanceRef.current, date: new Date().toISOString() });
+      setIsComplete(true);
+      setGameEnded(true);
+    });
 
     scoreRef.current = 0;
     setScore(0);
@@ -113,6 +127,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     setIsSlowMode(false);
     setSlowTimeLeft(0);
     setGameOver(false);
+    setIsComplete(false);
+    setMoonlightTimeLeft(0);
     setIsStarted(true);
     engineRef.current.start();
     audioManager.playBGM();
@@ -138,5 +154,6 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     bestScore, gameEnded, gameOver, isStarted,
     currentTheme, activeMilestone, activeThemeToast, dodgerMsg,
     startGame, showResult, engineRef,
+    isComplete, moonlightTimeLeft,
   };
 }
