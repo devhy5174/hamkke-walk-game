@@ -6,9 +6,11 @@ interface Props {
   message: string | null;
   engineRef: MutableRefObject<GameEngine | null>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  multiline?: boolean;
+  persistent?: boolean;
 }
 
-export function SpeechBubble({ message, engineRef, canvasRef }: Props) {
+export function SpeechBubble({ message, engineRef, canvasRef, multiline, persistent }: Props) {
   const [pos, setPos] = useState({ left: '50%', bottom: '28%' });
 
   useEffect(() => {
@@ -34,7 +36,15 @@ export function SpeechBubble({ message, engineRef, canvasRef }: Props) {
   if (!message) return null;
 
   return (
-    <div className="speech-bubble" style={{ left: pos.left, bottom: pos.bottom }}>
+    <div
+      className={`speech-bubble${multiline ? ' multiline' : ''}`}
+      style={{
+        left: pos.left,
+        bottom: pos.bottom,
+        animation: persistent ? 'bubbleFadeIn 0.5s ease forwards' : undefined,
+        opacity: persistent ? undefined : undefined,
+      }}
+    >
       <div className="speech-bubble-inner">{message}</div>
     </div>
   );

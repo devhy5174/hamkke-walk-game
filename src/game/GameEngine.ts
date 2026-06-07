@@ -29,6 +29,8 @@ import {
   POWER_DURATION,
   POWER_SCORE_MULT,
   SPEED_RAMP,
+  SPEED_CAP,
+  MOONLIGHT_SPEED,
   MILESTONES,
   MOONLIGHT_DURATION,
 } from "./constants";
@@ -130,6 +132,16 @@ const POWER_MESSAGES: Record<string, string[]> = {
     "대나무 향기~",
     "고요하고 좋아!",
   ],
+  moonlight: [
+    "황금 발자국이다! ✨",
+    "별빛이 쏟아져~ 🌙",
+    "황금 발자국 +20점! 🌟",
+    "달빛 아래 최고야~",
+    "이게 바로 보너스! 🎊",
+    "황금빛이 반짝반짝~",
+    "별이 쏟아진다! ✨",
+    "달님이 응원해요 🌙",
+  ],
 };
 
 export class GameEngine {
@@ -173,6 +185,14 @@ export class GameEngine {
   private reachedMilestones = new Set<number>();
   private currentThemeId = THEMES[0].id;
   private moonlightTimeLeft = -1; // -1: 미시작
+  private moonlightMsgTimer = 0;
+  private finishSequence = false;
+  private finishTimer = 0;
+  private photoMode = false;
+  private onFinishReady: (() => void) | null = null;
+  setFinishReadyCallback(cb: () => void) {
+    this.onFinishReady = cb;
+  }
 
   touchX: number | null = null;
   moveDx = 0;
@@ -222,8 +242,6 @@ export class GameEngine {
   private onThemeChange: (theme: GameTheme) => void;
   private onDodger: ((msg: string) => void) | null = null;
   private onPowerMsg: ((msg: string) => void) | null = null;
-  private onComplete: (() => void) | null = null;
-  setCompleteCallback(cb: () => void) { this.onComplete = cb; }
 
   setDodgerCallback(cb: (msg: string) => void) {
     this.onDodger = cb;
@@ -285,6 +303,7 @@ export class GameEngine {
 
   stop() {
     this.running = false;
+    this.photoMode = false;
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
@@ -305,16 +324,25 @@ export class GameEngine {
   }
 
   private tick = (now: number) => {
-    if (!this.running) return;
+    if (!this.running && !this.photoMode) return;
     const dt = this.prevTime ? Math.min(now - this.prevTime, 50) : 16;
     this.prevTime = now;
-    this.update(dt / 1000);
-    this.render();
+    if (this.photoMode) {
+      this.aliveTime += dt / 1000;
+      // 캐릭터 수평 중앙으로 부드럽게 이동
+      const centerX = this.canvas.width / 2 - this.player.width / 2;
+      this.player.x += (centerX - this.player.x) * 0.08;
+      this.render();
+    } else {
+      this.update(dt / 1000);
+      this.render();
+    }
     this.rafId = requestAnimationFrame(this.tick);
   };
 
   private get speedMult(): number {
-    return 1 + this.aliveTime * SPEED_RAMP;
+    if (this.currentThemeId === "moonlight") return MOONLIGHT_SPEED;
+    return Math.min(1 + this.aliveTime * SPEED_RAMP, SPEED_CAP);
   }
 
   private update(dtSec: number) {
@@ -404,17 +432,40 @@ export class GameEngine {
     const newTheme = getThemeByDistance(this.distanceMeters);
     if (newTheme.id !== this.currentThemeId) {
       this.currentThemeId = newTheme.id;
+      if (newTheme.id === "moonlight") this.obstacles = [];
       this.onThemeChange(newTheme);
     }
 
     // 달빛길 보너스 타이머
-    if (this.currentThemeId === 'moonlight') {
-      if (this.moonlightTimeLeft < 0) this.moonlightTimeLeft = MOONLIGHT_DURATION;
+    if (this.currentThemeId === "moonlight") {
+      if (this.finishSequence) {
+        this.aliveTime += dtSec; // 별 반짝임 유지
+        this.finishTimer += dtSec;
+        if (this.finishTimer >= 2.5 && !this.photoMode) {
+          this.photoMode = true;
+          this.onFinishReady?.();
+        }
+        return;
+      }
+      if (this.moonlightTimeLeft < 0) {
+        this.moonlightTimeLeft = MOONLIGHT_DURATION;
+        this.moonlightMsgTimer = 8; // 첫 메시지 8초 후
+      }
       this.moonlightTimeLeft -= dtSec;
       this.emitUpdate();
+
+      // 달빛길 전용 말풍선 — 8~12초 간격으로 랜덤 출력
+      this.moonlightMsgTimer -= dtSec;
+      if (this.moonlightMsgTimer <= 0) {
+        const msgs = POWER_MESSAGES["moonlight"];
+        this.onDodger?.(msgs[Math.floor(Math.random() * msgs.length)]);
+        this.moonlightMsgTimer = 8 + Math.random() * 4; // 8~12초 간격
+      }
+
       if (this.moonlightTimeLeft <= 0) {
-        this.running = false;
-        this.onComplete?.();
+        this.finishSequence = true;
+        this.finishTimer = 0;
+        this.footprints = [];
         return;
       }
     }
@@ -433,8 +484,12 @@ export class GameEngine {
       this.waterBottles.push(makeWaterBottle(width));
     }
 
-    // 시계 아이템 스폰 — 단풍길(350m)부터, 슬로우 중엔 스폰 안 함
-    if (!this.isSlowMode && this.distanceMeters >= 350) {
+    // 시계 아이템 스폰 — 단풍길(350m)부터, 슬로우·달빛길 중엔 스폰 안 함
+    if (
+      !this.isSlowMode &&
+      this.distanceMeters >= 350 &&
+      this.currentThemeId !== "moonlight"
+    ) {
       this.clockTimer += dtSec * 1000;
       if (this.clockTimer >= CLOCK_SPAWN_MS / sm) {
         this.clockTimer = 0;
@@ -444,17 +499,26 @@ export class GameEngine {
 
     // 장애물 스폰 (달빛길은 장애물 없음)
     this.obsTimer += dtSec * 1000;
-    if (this.obsTimer >= OBSTACLE_SPAWN_MS / sm && getThemeByDistance(this.distanceMeters).id !== 'moonlight') {
+    if (
+      this.obsTimer >= OBSTACLE_SPAWN_MS / sm &&
+      getThemeByDistance(this.distanceMeters).id !== "moonlight"
+    ) {
       this.obsTimer = 0;
       const obs = makeObstacle(width);
       const tid = getThemeByDistance(this.distanceMeters).id;
       // 다람쥐(숲길) → 50% dodger, 50% 정적 웅덩이
       if (obs.variant === "puddle" && tid === "forest" && Math.random() < 0.5) {
-        obs.style = "dodger"; obs.dodgerType = "squirrel"; obs.driftVx = 0; obs.noticed = false;
+        obs.style = "dodger";
+        obs.dodgerType = "squirrel";
+        obs.driftVx = 0;
+        obs.noticed = false;
       }
       // 등산객(대나무) → puddle 100% dodger (웅덩이 없음)
       if (obs.variant === "puddle" && tid === "bamboo") {
-        obs.style = "dodger"; obs.dodgerType = "hiker"; obs.driftVx = 0; obs.noticed = false;
+        obs.style = "dodger";
+        obs.dodgerType = "hiker";
+        obs.driftVx = 0;
+        obs.noticed = false;
       }
       this.obstacles.push(obs);
     }
@@ -465,10 +529,12 @@ export class GameEngine {
     this.footprints = this.footprints.filter((fp) => {
       fp.y += itemSpeed;
       if (hitFootprint(player, fp)) {
-        const isMoonlight = getThemeByDistance(this.distanceMeters).id === 'moonlight';
-        this.score += this.isPowerMode || isMoonlight
-          ? FOOTPRINT_SCORE * POWER_SCORE_MULT
-          : FOOTPRINT_SCORE;
+        const isMoonlight =
+          getThemeByDistance(this.distanceMeters).id === "moonlight";
+        this.score +=
+          this.isPowerMode || isMoonlight
+            ? FOOTPRINT_SCORE * POWER_SCORE_MULT
+            : FOOTPRINT_SCORE;
         this.emitUpdate();
         return false;
       }
@@ -602,19 +668,21 @@ export class GameEngine {
     renderBackground(rc, theme);
     renderDecorations(rc, theme);
 
-    // ── 발자국 아이템 (황금 원) ──
-    for (const fp of this.footprints) {
-      this.drawFootprint(fp.x, fp.y, fp.radius);
-    }
+    if (!this.photoMode) {
+      // ── 발자국 아이템 (황금 원) ──
+      for (const fp of this.footprints) {
+        this.drawFootprint(fp.x, fp.y, fp.radius);
+      }
 
-    // ── 물병 아이템 ──
-    for (const item of this.waterBottles) {
-      this.drawWaterBottle(item.x, item.y, item.radius);
-    }
+      // ── 물병 아이템 ──
+      for (const item of this.waterBottles) {
+        this.drawWaterBottle(item.x, item.y, item.radius);
+      }
 
-    // ── 시계 아이템 ──
-    for (const item of this.clockItems) {
-      this.drawClockItem(item.x, item.y, item.radius);
+      // ── 시계 아이템 ──
+      for (const item of this.clockItems) {
+        this.drawClockItem(item.x, item.y, item.radius);
+      }
     }
 
     // ── 장애물 ──
@@ -677,24 +745,59 @@ export class GameEngine {
       ctx.restore();
     }
 
-    // ── 파워모드 캔버스 비네트 (민트/수분 느낌) ──
+    // ── 파워모드 캔버스 비네트 ──
     if (this.isPowerMode) {
       const { width, height } = canvas;
       const t = this.aliveTime;
       const pulse = 0.18 + Math.sin(t * 5) * 0.06;
-      const intensity = this.powerTimeLeft <= 3 ? pulse * 1.8 : pulse;
-      const grad = ctx.createRadialGradient(
-        width / 2,
-        height / 2,
-        height * 0.25,
-        width / 2,
-        height / 2,
-        height * 0.9,
-      );
-      grad.addColorStop(0, "rgba(0,180,200,0)");
-      grad.addColorStop(1, `rgba(0,140,180,${intensity})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
+
+      if (this.currentThemeId === "moonlight") {
+        // 달빛길: 황금+보랏빛 달빛 비네트
+        const moonPulse = 0.22 + Math.sin(t * 3) * 0.1;
+        const grad = ctx.createRadialGradient(
+          width / 2,
+          height * 0.3,
+          height * 0.1,
+          width / 2,
+          height / 2,
+          height * 0.95,
+        );
+        grad.addColorStop(0, `rgba(255,230,100,0)`);
+        grad.addColorStop(0.5, `rgba(180,120,255,${moonPulse * 0.4})`);
+        grad.addColorStop(1, `rgba(80,40,160,${moonPulse})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // 황금 별빛 파티클 (상단에서 쏟아짐)
+        ctx.save();
+        for (let i = 0; i < 6; i++) {
+          const sx =
+            width * (0.1 + 0.16 * i) + Math.sin(t * 1.5 + i * 1.2) * 12;
+          const sy = (t * 40 * (0.6 + i * 0.08)) % height;
+          const alpha = 0.6 + Math.sin(t * 3 + i) * 0.3;
+          const r = 1.5 + (i % 3) * 0.8;
+          ctx.fillStyle = `rgba(255,220,80,${alpha})`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else {
+        // 기존: 민트/수분 비네트
+        const intensity = this.powerTimeLeft <= 3 ? pulse * 1.8 : pulse;
+        const grad = ctx.createRadialGradient(
+          width / 2,
+          height / 2,
+          height * 0.25,
+          width / 2,
+          height / 2,
+          height * 0.9,
+        );
+        grad.addColorStop(0, "rgba(0,180,200,0)");
+        grad.addColorStop(1, `rgba(0,140,180,${intensity})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+      }
     }
 
     // ── 땀방울 파티클 ──
@@ -733,18 +836,116 @@ export class GameEngine {
         height: this.player.height,
       };
     }
+
+    // 달빛길 피니시 텍스트
+    if (this.finishSequence || this.photoMode) {
+      this.drawFinishBanner();
+    }
+  }
+
+  private drawFinishBanner() {
+    const { ctx, canvas } = this;
+    const cx = canvas.width / 2;
+    const t = this.finishTimer;
+    const appear = Math.min(t / 0.4, 1);
+    const pulse = 1 + Math.sin(t * 5) * 0.04;
+    const cy = canvas.height * 0.32;
+    const fp = this.getGoldenFootprint();
+
+    // 황금 발자국 — 텍스트 뒤 배경 (반투명)
+    const bgSize = 220;
+    ctx.save();
+    ctx.globalAlpha = appear * 0.22;
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 20;
+    ctx.drawImage(fp, cx - bgSize / 2, cy - bgSize / 2, bgSize, bgSize);
+    ctx.restore();
+
+    // 텍스트 (발자국 위에)
+    ctx.save();
+    ctx.globalAlpha = appear;
+    ctx.translate(cx, cy);
+    ctx.scale(pulse, pulse);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "#FFD700";
+    ctx.shadowBlur = 30 + Math.sin(t * 4) * 10;
+    ctx.font = "bold 36px sans-serif";
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText("FINISHED!", 0, 0);
+    ctx.shadowBlur = 15;
+    ctx.font = "bold 18px sans-serif";
+    ctx.fillStyle = "rgba(255,255,200,0.9)";
+    ctx.fillText("🏆 모든 테마 완주 ✨", 0, 44);
+    ctx.restore();
+
   }
 
   private drawFlameEffect() {
     const { ctx, player: p } = this;
     const t = this.aliveTime;
-    // 캐릭터와 동일한 중심/반지름 계산
     const charR = ((p.height + 8) / 2) * 1.13;
     const cx = p.x + p.width / 2;
     const cy = p.y - 4 + charR + (this.running ? Math.sin(t * 10) * 2.5 : 0);
-    const orbitR = charR + 16; // 캐릭터 외곽 바로 밖
+    const orbitR = charR + 16;
 
-    // 민트 글로우 링
+    if (this.currentThemeId === "moonlight") {
+      // ── 달빛 황금 오브 ──
+      // 황금 글로우 링
+      ctx.save();
+      ctx.globalAlpha = 0.2 + Math.sin(t * 3) * 0.08;
+      ctx.beginPath();
+      ctx.arc(cx, cy, orbitR + 8, 0, Math.PI * 2);
+      ctx.fillStyle = "#FFD700";
+      ctx.fill();
+      ctx.restore();
+
+      // 보랏빛 궤도 링
+      ctx.save();
+      ctx.globalAlpha = 0.5 + Math.sin(t * 2.5) * 0.1;
+      ctx.strokeStyle = "rgba(220,180,255,0.85)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 7]);
+      ctx.lineDashOffset = -t * 25;
+      ctx.beginPath();
+      ctx.arc(cx, cy, orbitR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // 황금 별 오브 8개
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2 + t * 2.2;
+        const ox = cx + Math.cos(angle) * orbitR;
+        const oy = cy + Math.sin(angle) * orbitR;
+        const size = 5 + Math.sin(t * 4 + i * 1.2) * 1.8;
+        const isGold = i % 2 === 0;
+
+        ctx.save();
+        ctx.shadowColor = isGold
+          ? "rgba(255,215,0,0.9)"
+          : "rgba(200,160,255,0.8)";
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = isGold
+          ? "rgba(255,220,60,0.95)"
+          : "rgba(210,170,255,0.9)";
+        ctx.beginPath();
+        ctx.arc(ox, oy, size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 반짝임 하이라이트
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.beginPath();
+        ctx.arc(ox - size * 0.3, oy - size * 0.3, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      return;
+    }
+
+    // ── 기존 민트/수분 오브 ──
     ctx.save();
     ctx.globalAlpha = 0.18 + Math.sin(t * 4) * 0.06;
     ctx.beginPath();
@@ -753,7 +954,6 @@ export class GameEngine {
     ctx.fill();
     ctx.restore();
 
-    // 궤도 링 (점선 느낌)
     ctx.save();
     ctx.globalAlpha = 0.3 + Math.sin(t * 3) * 0.08;
     ctx.strokeStyle = "rgba(100,220,240,0.7)";
@@ -766,7 +966,6 @@ export class GameEngine {
     ctx.setLineDash([]);
     ctx.restore();
 
-    // 물방울 오브 6개
     for (let i = 0; i < 6; i++) {
       const angle = (i / 6) * Math.PI * 2 + t * 2.8;
       const ox = cx + Math.cos(angle) * orbitR;
@@ -774,7 +973,6 @@ export class GameEngine {
       const size = 6 + Math.sin(t * 5 + i * 1.4) * 1.5;
       const isBlue = i % 2 === 0;
 
-      // 물방울 본체
       ctx.save();
       ctx.shadowColor = isBlue ? "rgba(33,150,243,0.7)" : "rgba(0,188,212,0.7)";
       ctx.shadowBlur = 10;
@@ -784,7 +982,6 @@ export class GameEngine {
       ctx.fill();
       ctx.restore();
 
-      // 물방울 하이라이트
       ctx.save();
       ctx.fillStyle = "rgba(255,255,255,0.65)";
       ctx.beginPath();
@@ -845,16 +1042,22 @@ export class GameEngine {
 
   private getGoldenFootprint(): HTMLCanvasElement | HTMLImageElement {
     if (this.footprintGolden) return this.footprintGolden;
-    if (!this.footprintImg.complete || !this.footprintImg.naturalWidth) return this.footprintImg;
+    if (!this.footprintImg.complete || !this.footprintImg.naturalWidth)
+      return this.footprintImg;
     const size = 128;
-    const offscreen = document.createElement('canvas');
-    offscreen.width = size; offscreen.height = size;
-    const oc = offscreen.getContext('2d')!;
+    const offscreen = document.createElement("canvas");
+    offscreen.width = size;
+    offscreen.height = size;
+    const oc = offscreen.getContext("2d")!;
     oc.drawImage(this.footprintImg, 0, 0, size, size);
     const data = oc.getImageData(0, 0, size, size);
     const d = data.data;
     for (let i = 0; i < d.length; i += 4) {
-      if (d[i + 3] > 20) { d[i] = 212; d[i + 1] = 175; d[i + 2] = 55; } // 황금색 #D4AF37
+      if (d[i + 3] > 20) {
+        d[i] = 212;
+        d[i + 1] = 175;
+        d[i + 2] = 55;
+      } // 황금색 #D4AF37
     }
     oc.putImageData(data, 0, 0);
     this.footprintGolden = offscreen;
@@ -864,12 +1067,12 @@ export class GameEngine {
   private drawFootprint(cx: number, cy: number, r: number) {
     const { ctx } = this;
     const tid = getThemeByDistance(this.distanceMeters).id;
-    const isMoonlight = tid === 'moonlight';
-    const isDark = tid === 'forest' || isMoonlight;
+    const isMoonlight = tid === "moonlight";
+    const isDark = tid === "forest" || isMoonlight;
 
     if (isMoonlight) {
       ctx.save();
-      ctx.shadowColor = '#FFD700';
+      ctx.shadowColor = "#FFD700";
       ctx.shadowBlur = 22 + Math.sin(this.aliveTime * 4) * 8;
       ctx.drawImage(this.getGoldenFootprint(), cx - r, cy - r, r * 2, r * 2);
       ctx.restore();
@@ -880,7 +1083,7 @@ export class GameEngine {
     if (isDark) {
       ctx.save();
       ctx.globalAlpha = 0.5;
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.3, 0, Math.PI * 2);
       ctx.fill();
@@ -956,7 +1159,12 @@ export class GameEngine {
   private drawDodgingObstacle(obs: Obstacle) {
     const { ctx } = this;
     // 스폰 당시 테마 이미지를 dodgerType으로 고정 (테마 전환 시 이미지 바뀌는 버그 방지)
-    const imgKey = obs.dodgerType === "squirrel" ? "forest" : obs.dodgerType === "hiker" ? "bamboo" : "park";
+    const imgKey =
+      obs.dodgerType === "squirrel"
+        ? "forest"
+        : obs.dodgerType === "hiker"
+          ? "bamboo"
+          : "park";
     const img = this.obsPuddleImgs[imgKey] ?? this.obsPuddleImgs["park"];
     const { x, y, width: w, height: h, noticed, noticedAt, driftVx } = obs;
     const cx = x + w / 2;
@@ -1043,7 +1251,7 @@ export class GameEngine {
   private drawPuddle(x: number, y: number, w: number, h: number) {
     const tid = getThemeByDistance(this.distanceMeters).id;
     // 숲·산 테마의 obsPuddleImgs는 캐릭터(다람쥐·등산객) 이미지라 정적 웅덩이엔 공원 웅덩이 사용
-    const staticTid = (tid === "forest" || tid === "bamboo") ? "park" : tid;
+    const staticTid = tid === "forest" || tid === "bamboo" ? "park" : tid;
     const img = this.obsPuddleImgs[staticTid] ?? this.obsPuddleImgs["park"];
     const { ctx } = this;
     ctx.save();

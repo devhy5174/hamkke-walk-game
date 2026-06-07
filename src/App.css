@@ -113,6 +113,17 @@
   white-space: nowrap;
 }
 
+.speech-bubble.multiline {
+  white-space: pre-line;
+  text-align: center;
+  max-width: 240px;
+}
+
+@keyframes bubbleFadeIn {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(6px); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
 .speech-bubble-inner {
   background: #fff;
   border-radius: 20px;
@@ -298,3 +309,4 @@
   backdrop-filter: blur(6px);
   animation: warningText 0.45s ease-in-out infinite;
 }
+

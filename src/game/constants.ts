@@ -28,9 +28,9 @@ export const PUDDLE_HEIGHT = 55;
 
 // 시계 아이템 (속도 감소)
 export const CLOCK_RADIUS = 16;
-export const CLOCK_SPAWN_MS = 5500;  // 물병(2500)보다 2배 이상 희귀
-export const SLOW_DURATION = 6;      // 초
-export const SLOW_FACTOR = 0.5;      // 슬로우 중 속도 배율 (절반)
+export const CLOCK_SPAWN_MS = 5500; // 물병(2500)보다 2배 이상 희귀
+export const SLOW_DURATION = 6; // 초
+export const SLOW_FACTOR = 0.5; // 슬로우 중 속도 배율 (절반)
 
 // 파워워커 모드
 export const GAUGE_CAPACITY = 10;
@@ -45,7 +45,11 @@ export const SPEED_RAMP = 0.03;
 export const DISTANCE_SPEED = 2.5;
 
 // 달빛길 보너스 타이머 (초)
-export const MOONLIGHT_DURATION = 90;
+export const MOONLIGHT_DURATION = 90; //TODO : 90으로 정정
+
+// 속도 제한
+export const SPEED_CAP = 5.0; // 눈길 진입 속도에서 고정 (도전적이지만 클리어 가능)
+export const MOONLIGHT_SPEED = 2.0; // 달빛길 고정 속도 (여유롭게 즐기기)
 
 // 마일스톤 — 거리 배율에 맞게 조정
 export const MILESTONES: Milestone[] = [
