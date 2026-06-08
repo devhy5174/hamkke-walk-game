@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { HiSpeakerWave, HiSpeakerXMark } from "react-icons/hi2";
-import { IoPauseCircle, IoGameController, IoHelpCircle } from "react-icons/io5";
+import { IoPauseCircle, IoHelpCircle } from "react-icons/io5";
 import { useGame } from "./hooks/useGame";
 import { GameCanvas } from "./components/GameCanvas";
 import { GameHUD } from "./components/GameHUD";
@@ -57,7 +57,6 @@ function App() {
 
   const [isMuted, setIsMuted] = useState(audioManager.muted);
   const [photoCaption, setPhotoCaption] = useState("산책길도감 많이 사랑해주세요 🌿");
-  const [isEditingCaption, setIsEditingCaption] = useState(false);
   const PRACTICE_SPEEDS = [
     { mult: 1.0, label: "🌳", desc: "1단계" },
     { mult: 1.5, label: "🌲", desc: "2단계" },
@@ -142,11 +141,15 @@ function App() {
         )}
         {isStarted && (
           <SpeechBubble
-            message={isPhotoMode ? photoMsg : dodgerMsg}
+            message={isPhotoMode
+              ? (isPractice ? photoCaption : photoMsg)
+              : dodgerMsg}
             engineRef={engineRef}
             canvasRef={canvasRef}
             multiline={isPhotoMode}
             persistent={isPhotoMode}
+            editable={isPhotoMode && isPractice}
+            onEdit={setPhotoCaption}
           />
         )}
         {isStarted && !isPractice && <MilestoneToast milestone={activeMilestone} />}
@@ -217,61 +220,7 @@ function App() {
 
         {/* 달빛길 포토모드 */}
         {isPhotoMode && !gameEnded && (
-          isPractice ? (
-            // 산책 모드: 편집 가능한 포토 말풍선
-            <div style={{
-              position: "absolute",
-              bottom: 80,
-              left: 0, right: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 10,
-              zIndex: 30,
-              pointerEvents: "auto",
-            }}>
-              {isEditingCaption ? (
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input
-                    autoFocus
-                    value={photoCaption}
-                    onChange={e => setPhotoCaption(e.target.value)}
-                    onBlur={() => setIsEditingCaption(false)}
-                    onKeyDown={e => e.key === "Enter" && setIsEditingCaption(false)}
-                    style={{
-                      padding: "10px 16px",
-                      borderRadius: 50,
-                      border: "1.5px solid rgba(255,215,0,0.6)",
-                      background: "rgba(10,5,30,0.85)",
-                      color: "#FFD700",
-                      fontSize: "0.88rem",
-                      fontWeight: 700,
-                      width: 240,
-                      outline: "none",
-                      textAlign: "center",
-                    }}
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={() => setIsEditingCaption(true)}
-                  style={{
-                    background: "rgba(10,5,30,0.75)",
-                    border: "1.5px solid rgba(255,215,0,0.5)",
-                    borderRadius: 50,
-                    padding: "10px 24px",
-                    color: "#FFD700",
-                    fontSize: "0.88rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    backdropFilter: "blur(6px)",
-                  }}
-                >
-                  {photoCaption} ✏️
-                </button>
-              )}
-            </div>
-          ) : (
+          isPractice ? null : (
             <div
               onClick={confirmComplete}
               style={{

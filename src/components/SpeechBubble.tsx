@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
 import type { GameEngine } from '../game/GameEngine';
 
@@ -8,10 +8,19 @@ interface Props {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   multiline?: boolean;
   persistent?: boolean;
+  editable?: boolean;
+  onEdit?: (text: string) => void;
 }
 
-export function SpeechBubble({ message, engineRef, canvasRef, multiline, persistent }: Props) {
+export function SpeechBubble({ message, engineRef, canvasRef, multiline, persistent, editable, onEdit }: Props) {
   const [pos, setPos] = useState({ left: '50%', bottom: '28%' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(message ?? '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setDraft(message ?? '');
+  }, [message]);
 
   useEffect(() => {
     if (!message) return;
@@ -33,7 +42,18 @@ export function SpeechBubble({ message, engineRef, canvasRef, multiline, persist
     return () => cancelAnimationFrame(rafId);
   }, [message, engineRef, canvasRef]);
 
+  useEffect(() => {
+    if (isEditing) inputRef.current?.focus();
+  }, [isEditing]);
+
+  if (!message && !editable) return null;
   if (!message) return null;
+
+  const handleConfirm = () => {
+    setIsEditing(false);
+    if (draft.trim()) onEdit?.(draft.trim());
+    else setDraft(message ?? '');
+  };
 
   return (
     <div
@@ -42,10 +62,35 @@ export function SpeechBubble({ message, engineRef, canvasRef, multiline, persist
         left: pos.left,
         bottom: pos.bottom,
         animation: persistent ? 'bubbleFadeIn 0.5s ease forwards' : undefined,
-        opacity: persistent ? undefined : undefined,
+        cursor: editable ? 'pointer' : undefined,
       }}
     >
-      <div className="speech-bubble-inner">{message}</div>
+      {isEditing ? (
+        <div className="speech-bubble-inner" style={{ padding: '6px 10px' }}>
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={handleConfirm}
+            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+            style={{
+              border: 'none', outline: 'none',
+              background: 'transparent',
+              fontSize: '0.9rem', fontWeight: 700,
+              color: '#2D7D52', width: 180,
+              textAlign: 'center',
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          className="speech-bubble-inner"
+          onClick={() => editable && setIsEditing(true)}
+          style={editable ? { cursor: 'pointer' } : undefined}
+        >
+          {message}{editable && <span style={{ fontSize: '0.7rem', marginLeft: 4, opacity: 0.5 }}>✏️</span>}
+        </div>
+      )}
     </div>
   );
 }
