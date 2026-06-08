@@ -529,8 +529,8 @@ export class GameEngine {
     const scrollDelta = WATER_BASE_SPEED * sm * boost * dtSec;
     this.scrollY = (this.scrollY + scrollDelta) % 60;
 
-    // 눈길 자국 트레일 포인트 수집
-    if (this.currentThemeId === 'snow' && this.player) {
+    // 자국 트레일 포인트 수집 (눈길 + 달빛길 체험)
+    if ((this.currentThemeId === 'snow' || (this.isPracticeMode && this.currentThemeId === 'moonlight')) && this.player) {
       this.snowTrailTimer += dtSec;
       if (this.snowTrailTimer >= 0.18) {
         this.snowTrailTimer = 0;
@@ -819,8 +819,9 @@ export class GameEngine {
       aliveTime: this.aliveTime,
       playerCx: this.player ? this.player.x + this.player.width / 2 : undefined,
       playerY: this.player ? this.player.y + this.player.height : undefined,
-      snowTrail: this.currentThemeId === 'snow' ? this.snowTrail : undefined,
+      snowTrail: (this.currentThemeId === 'snow' || (this.isPracticeMode && this.currentThemeId === 'moonlight')) ? this.snowTrail : undefined,
       snowFootprintImg: this.currentThemeId === 'snow' ? this.getSnowFootprint() : undefined,
+      goldenFootprintImg: (this.isPracticeMode && this.currentThemeId === 'moonlight') ? this.getGoldenFootprint() : undefined,
     };
 
     // ── 배경 + 장식 (테마별 렌더링) ──

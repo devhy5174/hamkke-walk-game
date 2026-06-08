@@ -13,6 +13,7 @@ export interface RenderCtx {
   playerY?: number;
   snowTrail?: Array<{ x: number; absY: number; yd: number; idx: number }>;
   snowFootprintImg?: HTMLCanvasElement | null;
+  goldenFootprintImg?: HTMLCanvasElement | HTMLImageElement | null;
 }
 
 // ── 배경 (잔디 + 길 + 발자국 패턴 + 풀잎) ───────────────────────────────
@@ -749,6 +750,31 @@ function renderStars(rc: RenderCtx) {
     ctx.lineTo(mx, my);
     ctx.stroke();
     ctx.restore();
+  }
+
+  // ── 체험 모드 황금 발자국 트레일 ──
+  if (rc.snowTrail && rc.snowTrail.length > 0 && rc.goldenFootprintImg) {
+    const img = rc.goldenFootprintImg;
+    const size = 32;
+    for (const p of rc.snowTrail) {
+      const screenY = p.absY + p.yd;
+      if (screenY > height + 20 || screenY < -size) continue;
+      const fade  = Math.max(0, 1 - p.yd / height);
+      const pulse = 0.75 + Math.abs(Math.sin(aliveTime * 2.5 + p.idx * 0.8)) * 0.25;
+      const alpha = fade * pulse;
+      const isLeft = p.idx % 2 === 0;
+      const offsetX = isLeft ? -16 : 4;
+      const angle = isLeft ? -0.2 : 0.2;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur  = 14 * pulse;
+      ctx.translate(p.x + offsetX + size / 2, screenY);
+      ctx.rotate(angle);
+      ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      ctx.restore();
+    }
   }
 }
 
