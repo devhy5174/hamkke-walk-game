@@ -11,7 +11,7 @@ export interface RenderCtx {
   aliveTime: number;
   playerCx?: number;
   playerY?: number;
-  snowTrail?: Array<{ x: number; yd: number; idx: number }>;
+  snowTrail?: Array<{ x: number; absY: number; yd: number; idx: number }>;
   snowFootprintImg?: HTMLCanvasElement | null;
 }
 
@@ -457,12 +457,12 @@ function renderSnow(rc: RenderCtx) {
   const { ctx, width, height, scrollY, aliveTime, playerY } = rc;
 
   // ── 캐릭터 이동 경로 발자국 도장 ──
-  if (playerY !== undefined && rc.snowTrail && rc.snowTrail.length > 0 && rc.snowFootprintImg) {
+  if (rc.snowTrail && rc.snowTrail.length > 0 && rc.snowFootprintImg) {
     const img = rc.snowFootprintImg;
     const size = 28;
     for (const p of rc.snowTrail) {
-      const screenY = playerY + p.yd;
-      if (screenY > height + 20) continue;
+      const screenY = p.absY + p.yd; // 캡처 시점 절대 Y + 이후 스크롤 누적
+      if (screenY > height + 20 || screenY < -size) continue;
       const alpha = Math.max(0, 0.7 * (1 - p.yd / height));
       const isLeft = p.idx % 2 === 0;
       const offsetX = isLeft ? -14 : 2;

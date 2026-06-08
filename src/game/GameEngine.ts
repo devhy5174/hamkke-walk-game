@@ -230,7 +230,7 @@ export class GameEngine {
   private isSlowMode = false;
   private slowTimeLeft = 0;
   private slowEaseTimer = 0; // 시계 종료 후 속도 페이드인 카운트다운
-  private snowTrail: Array<{ x: number; yd: number; idx: number }> = [];
+  private snowTrail: Array<{ x: number; absY: number; yd: number; idx: number }> = [];
   private snowTrailTimer = 0;
 
   private running = false;
@@ -534,7 +534,12 @@ export class GameEngine {
       this.snowTrailTimer += dtSec;
       if (this.snowTrailTimer >= 0.18) {
         this.snowTrailTimer = 0;
-        this.snowTrail.push({ x: this.player.x + this.player.width / 2, yd: 0, idx: this.snowTrail.length });
+        this.snowTrail.push({
+          x: this.player.x + this.player.width / 2,
+          absY: this.player.y + this.player.height,
+          yd: 0,
+          idx: this.snowTrail.length,
+        });
       }
       for (const p of this.snowTrail) p.yd += scrollDelta;
       this.snowTrail = this.snowTrail.filter(p => p.yd < this.canvas.height + 20);
