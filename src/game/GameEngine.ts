@@ -171,6 +171,7 @@ export class GameEngine {
   private slowTimeLeft = 0;
 
   private running = false;
+  private paused = false;
   private rafId = 0;
   private prevTime = 0;
   private footprintTimer = 0;
@@ -185,6 +186,7 @@ export class GameEngine {
   private reachedMilestones = new Set<number>();
   private currentThemeId = THEMES[0].id;
   private moonlightTimeLeft = -1; // -1: 미시작
+  isPracticeMode = false; // 체험 모드 — 충돌 무시, 저장 없음
   private moonlightMsgTimer = 0;
   private finishSequence = false;
   private finishTimer = 0;
@@ -265,7 +267,7 @@ export class GameEngine {
     this.onThemeChange = onThemeChange;
   }
 
-  start() {
+  start(_startDistance = 0) {
     this.stop();
     const { width, height } = this.canvas;
     this.player = {
@@ -303,11 +305,31 @@ export class GameEngine {
 
   stop() {
     this.running = false;
+    this.paused = false;
     this.photoMode = false;
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
     }
+  }
+
+  pause(): boolean {
+    if (!this.running || this.paused) return false;
+    this.paused = true;
+    cancelAnimationFrame(this.rafId);
+    this.rafId = 0;
+    return true;
+  }
+
+  resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    this.prevTime = 0; // dt 스파이크 방지
+    this.rafId = requestAnimationFrame(this.tick);
+  }
+
+  get isGamePaused() {
+    return this.paused;
   }
 
   private emitUpdate() {

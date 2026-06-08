@@ -7,6 +7,7 @@ class AudioManager {
   private bgmFinished: HTMLAudioElement;
   private sfxWater: HTMLAudioElement;
   private currentBgm: 'main' | 'finished' = 'main';
+  private _muted: boolean = false;
 
   constructor() {
     this.bgm = new Audio(bgmSrc);
@@ -19,6 +20,23 @@ class AudioManager {
 
     this.sfxWater = new Audio(sfxWaterSrc);
     this.sfxWater.volume = 0.7;
+
+    this._muted = localStorage.getItem('hamkke_muted') === 'true';
+    this.bgm.muted = this._muted;
+    this.bgmFinished.muted = this._muted;
+    this.sfxWater.muted = this._muted;
+  }
+
+  get muted() {
+    return this._muted;
+  }
+
+  toggleMute() {
+    this._muted = !this._muted;
+    this.bgm.muted = this._muted;
+    this.bgmFinished.muted = this._muted;
+    this.sfxWater.muted = this._muted;
+    localStorage.setItem('hamkke_muted', String(this._muted));
   }
 
   playBGM() {
@@ -52,6 +70,16 @@ class AudioManager {
       this.sfxWater.pause();
       this.sfxWater.currentTime = 0;
     }, 1500);
+  }
+
+  pauseBGM() {
+    if (this.currentBgm === 'main') this.bgm.pause();
+    else this.bgmFinished.pause();
+  }
+
+  resumeBGM() {
+    if (this.currentBgm === 'main') this.bgm.play().catch(() => {});
+    else this.bgmFinished.play().catch(() => {});
   }
 
   setBGMVolume(v: number) {

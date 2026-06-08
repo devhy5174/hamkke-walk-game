@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { HiSpeakerWave, HiSpeakerXMark } from "react-icons/hi2";
+import { IoPauseCircle } from "react-icons/io5";
 import { useGame } from "./hooks/useGame";
 import { GameCanvas } from "./components/GameCanvas";
 import { GameHUD } from "./components/GameHUD";
@@ -12,6 +14,7 @@ import { ThemeCollectionModal } from "./components/ThemeCollectionModal";
 import { CharacterSelect } from "./components/CharacterSelect";
 import { SpeechBubble } from "./components/SpeechBubble";
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
+import { audioManager } from "./utils/audio";
 import "./App.css";
 
 function App() {
@@ -33,6 +36,9 @@ function App() {
     activeThemeToast,
     dodgerMsg,
     startGame,
+    isPaused,
+    pauseGame: _pauseGame,
+    resumeGame,
     showResult,
     confirmComplete,
     backToPhotoMode,
@@ -44,6 +50,8 @@ function App() {
     photoMsg,
   } = useGame(canvasRef);
 
+  const [isMuted, setIsMuted] = useState(audioManager.muted);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [showRecords, setShowRecords] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
   const [showRankingViewOnly, setShowRankingViewOnly] = useState(false);
@@ -53,6 +61,27 @@ function App() {
 
   const selectedChar =
     CHARACTERS.find((c) => c.id === selectedCharId) ?? CHARACTERS[0];
+
+  const handleContinue = () => {
+    let n = 3;
+    setCountdown(n);
+    const step = () => {
+      n -= 1;
+      if (n > 0) {
+        setCountdown(n);
+        setTimeout(step, 1000);
+      } else {
+        setCountdown(null);
+        resumeGame();
+      }
+    };
+    setTimeout(step, 1000);
+  };
+
+  const handleToggleMute = () => {
+    audioManager.toggleMute();
+    setIsMuted(audioManager.muted);
+  };
 
   const handleSelectChar = (id: string) => {
     setSelectedCharId(id);
@@ -68,6 +97,12 @@ function App() {
   };
 
   return (
+    <>
+    <div className="landscape-block">
+      <div className="landscape-block-icon">📱</div>
+      <div className="landscape-block-text">세로 모드로 돌려주세요</div>
+      <div className="landscape-block-sub">이 게임은 세로 화면에 최적화되어 있어요</div>
+    </div>
     <div className="app">
       <GameCanvas canvasRef={canvasRef} engineRef={engineRef} />
 
@@ -355,6 +390,68 @@ function App() {
         </div>
       )}
 
+      {/* 일시정지 오버레이 */}
+      {isPaused && isStarted && !gameEnded && !gameOver && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(6px)",
+          zIndex: 40,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 28,
+        }}>
+          {countdown !== null ? (
+            <div
+              key={countdown}
+              className="pause-countdown"
+            >
+              {countdown}
+            </div>
+          ) : (
+            <>
+              <IoPauseCircle size={72} color="rgba(255,255,255,0.9)" />
+              <div style={{
+                fontSize: "1.4rem",
+                fontWeight: 800,
+                color: "#fff",
+                letterSpacing: -0.5,
+              }}>
+                일시정지
+              </div>
+              <div style={{
+                fontSize: "0.85rem",
+                color: "rgba(255,255,255,0.55)",
+                marginTop: -16,
+              }}>
+                잠시 자리를 비웠나요?
+              </div>
+              <button
+                onClick={handleContinue}
+                style={{
+                  marginTop: 8,
+                  padding: "15px 48px",
+                  background: "linear-gradient(135deg, #3DAE79, #2D9065)",
+                  border: "none",
+                  borderRadius: 50,
+                  fontSize: "1.05rem",
+                  fontWeight: 800,
+                  color: "#fff",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 20px rgba(61,174,121,0.45)",
+                  letterSpacing: 0.3,
+                }}
+              >
+                계속하기 🌿
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {gameOver && (
         <GameOverModal
           score={score}
@@ -386,7 +483,38 @@ function App() {
       {showRankingViewOnly && (
         <RankingModal viewOnly onClose={() => setShowRankingViewOnly(false)} />
       )}
+
+      {/* 음소거 버튼 */}
+      <button
+        onClick={handleToggleMute}
+        style={{
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          width: 44,
+          height: 44,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(0,0,0,0.08)",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          fontSize: 20,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 50,
+          pointerEvents: "auto",
+        }}
+        aria-label={isMuted ? "소리 켜기" : "소리 끄기"}
+      >
+        {isMuted
+          ? <HiSpeakerXMark size={22} color="#888" />
+          : <HiSpeakerWave size={22} color="#3DAE79" />
+        }
+      </button>
     </div>
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import type { RefObject } from "react";
 import { GameEngine } from "../game/GameEngine";
 import type { GameStats, Milestone } from "../game/types";
@@ -36,9 +36,32 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [activeThemeToast, setActiveThemeToast] = useState<GameTheme | null>(
     null,
   );
+  const [isPaused, setIsPaused] = useState(false);
   const [dodgerMsg, setDodgerMsg] = useState<string | null>(null);
   const dodgerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [photoMsg, setPhotoMsg] = useState<string | null>(null);
+
+  const pauseGame = useCallback(() => {
+    const paused = engineRef.current?.pause();
+    if (paused) {
+      audioManager.pauseBGM();
+      setIsPaused(true);
+    }
+  }, []);
+
+  const resumeGame = useCallback(() => {
+    engineRef.current?.resume();
+    audioManager.resumeBGM();
+    setIsPaused(false);
+  }, []);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) pauseGame();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [pauseGame]);
 
   const handleUpdate = useCallback((stats: GameStats) => {
     scoreRef.current = stats.score;
@@ -191,6 +214,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       setShowCompletionOverlay(false);
       setPhotoMsg(null);
       setMoonlightTimeLeft(0);
+      setIsPaused(false);
       setIsStarted(true);
       engineRef.current.start();
       audioManager.playBGM();
@@ -231,11 +255,14 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     gameEnded,
     gameOver,
     isStarted,
+    isPaused,
     currentTheme,
     activeMilestone,
     activeThemeToast,
     dodgerMsg,
     startGame,
+    pauseGame,
+    resumeGame,
     showResult,
     confirmComplete,
     backToPhotoMode,
