@@ -183,13 +183,12 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
 // ── 테마 상세 팝업 ───────────────────────────────────────────────────────────
 
 function ThemeDetailPopup({
-  theme, index, onClose, onPractice, allUnlocked,
+  theme, index, onClose, onPractice,
 }: {
   theme: GameTheme;
   index: number;
   onClose: () => void;
   onPractice?: (theme: GameTheme) => void;
-  allUnlocked: boolean;
 }) {
   return (
     <div style={detailBackdrop} onClick={onClose}>
@@ -205,7 +204,7 @@ function ThemeDetailPopup({
           </div>
         </div>
         <p style={detailDesc}>{DESCRIPTIONS[theme.id]}</p>
-        {allUnlocked && onPractice && (
+        {onPractice && (
           <button style={practiceBtn} onClick={() => onPractice(theme)}>
             🎮 체험하기
           </button>
@@ -223,16 +222,26 @@ interface Props {
   onPractice?: (theme: GameTheme) => void;
 }
 
+const PRACTICE_NOTICE_KEY = 'hamkke-practice-notified';
+
 export function ThemeCollectionModal({ onClose, onPractice }: Props) {
   const unlocked = getUnlockedThemes();
   const count = unlocked.length;
   const allUnlocked = count >= THEMES.length;
   const [selected, setSelected] = useState<{ theme: GameTheme; index: number } | null>(null);
+  const [showPracticeNotice, setShowPracticeNotice] = useState(() =>
+    allUnlocked && !localStorage.getItem(PRACTICE_NOTICE_KEY)
+  );
 
   const handlePractice = (theme: GameTheme) => {
     setSelected(null);
     onClose();
     onPractice?.(theme);
+  };
+
+  const dismissNotice = () => {
+    localStorage.setItem(PRACTICE_NOTICE_KEY, '1');
+    setShowPracticeNotice(false);
   };
 
   return (
@@ -278,13 +287,33 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
         </div>
       </div>
 
+      {/* 체험 모드 최초 안내 팝업 */}
+      {showPracticeNotice && (
+        <div style={noticeBackdrop} onClick={dismissNotice}>
+          <div style={noticeCard} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: '2.8rem', marginBottom: 8 }}>🎮</div>
+            <div style={noticeTitle}>산책 체험 모드 활성화!</div>
+            <div style={noticeBody}>
+              모든 테마를 해금했어요 🎉<br />
+              각 테마를 탭하면 <strong>체험하기</strong> 버튼이 생겨요.<br />
+              장애물에 부딪혀도 괜찮으니 마음껏 산책해보세요!
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 18 }}>
+              기록·랭킹에는 반영되지 않아요
+            </div>
+            <button style={noticeBtn} onClick={dismissNotice}>
+              알겠어요! 체험해볼게요 ✨
+            </button>
+          </div>
+        </div>
+      )}
+
       {selected && (
         <ThemeDetailPopup
           theme={selected.theme}
           index={selected.index}
           onClose={() => setSelected(null)}
           onPractice={handlePractice}
-          allUnlocked={allUnlocked}
         />
       )}
     </>
@@ -363,6 +392,35 @@ const closeBtn: CSSProperties = {
   background: '#3DAE79', color: '#fff', border: 'none',
   borderRadius: 50, padding: '13px 0', fontSize: '1rem', fontWeight: 700,
   cursor: 'pointer', width: '100%', boxShadow: '0 4px 16px rgba(61,174,121,0.3)',
+};
+
+// 체험 모드 안내 팝업
+const noticeBackdrop: CSSProperties = {
+  position: 'absolute', inset: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  background: 'rgba(30,10,60,0.75)', backdropFilter: 'blur(6px)', zIndex: 70,
+};
+const noticeCard: CSSProperties = {
+  background: 'linear-gradient(145deg, #4a3080, #2d1a5e)',
+  border: '1.5px solid rgba(180,140,255,0.35)',
+  borderRadius: 28, padding: '32px 28px 24px',
+  textAlign: 'center', maxWidth: 300, width: '88%',
+  boxShadow: '0 12px 40px rgba(102,60,220,0.5)',
+};
+const noticeTitle: CSSProperties = {
+  fontSize: '1.3rem', fontWeight: 800, color: '#fff',
+  marginBottom: 12, letterSpacing: -0.3,
+};
+const noticeBody: CSSProperties = {
+  fontSize: '0.88rem', color: 'rgba(255,255,255,0.8)',
+  lineHeight: 1.7, marginBottom: 8,
+};
+const noticeBtn: CSSProperties = {
+  width: '100%', padding: '14px 0',
+  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+  border: 'none', borderRadius: 50,
+  fontSize: '0.95rem', fontWeight: 800, color: '#fff',
+  cursor: 'pointer', boxShadow: '0 4px 16px rgba(102,126,234,0.5)',
 };
 
 // 상세 팝업
