@@ -271,7 +271,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       if (theme.id === 'moonlight') {
         engineRef.current.setFinishReadyCallback(() => {
           setIsPhotoMode(true);
-          setTimeout(() => setPhotoMsg("달빛길 체험 완주! 🌙✨\n나가기를 눌러 도감으로 돌아가요"), 1000);
+          setTimeout(() => setPhotoMsg("달빛길 산책 완주! 🌙✨\n나가기를 눌러 도감으로 돌아가요"), 1000);
         });
       }
 

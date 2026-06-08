@@ -752,7 +752,7 @@ function renderStars(rc: RenderCtx) {
     ctx.restore();
   }
 
-  // ── 체험 모드 황금 발자국 트레일 ──
+  // ── 산책 모드 황금 발자국 트레일 ──
   if (rc.snowTrail && rc.snowTrail.length > 0 && rc.goldenFootprintImg) {
     const img = rc.goldenFootprintImg;
     const size = 32;

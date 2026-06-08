@@ -14,6 +14,7 @@ import { ThemeCollectionModal } from "./components/ThemeCollectionModal";
 import { TipsModal } from "./components/TipsModal";
 import { CharacterSelect } from "./components/CharacterSelect";
 import { SpeechBubble } from "./components/SpeechBubble";
+import { PracticeThemeBanner } from "./components/PracticeThemeBanner";
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
 import { audioManager } from "./utils/audio";
 import "./App.css";
@@ -112,7 +113,7 @@ function App() {
     <div className="app">
       <GameCanvas canvasRef={canvasRef} engineRef={engineRef} />
 
-      {isStarted && (
+      {isStarted && !isPractice && (
         <GameHUD
           score={score}
           bestScore={bestScore}
@@ -534,29 +535,10 @@ function App() {
         <RankingModal viewOnly onClose={() => setShowRankingViewOnly(false)} />
       )}
 
-      {/* 체험 모드 HUD */}
+      {/* 산책 모드 HUD */}
       {isStarted && isPractice && (
         <>
-          <div style={{
-            position: "absolute",
-            top: 88,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "linear-gradient(135deg, rgba(102,126,234,0.92), rgba(118,75,162,0.92))",
-            backdropFilter: "blur(8px)",
-            borderRadius: 50,
-            padding: "6px 16px",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#fff",
-            whiteSpace: "nowrap",
-            pointerEvents: "none",
-            zIndex: 20,
-            boxShadow: "0 2px 12px rgba(102,126,234,0.4)",
-            letterSpacing: 0.3,
-          }}>
-            🎮 체험 모드 · 기록 저장 안 됨
-          </div>
+          <PracticeThemeBanner theme={currentTheme} />
           <button
             onClick={() => setShowPracticeExit(true)}
             style={{
@@ -580,7 +562,7 @@ function App() {
             나가기
           </button>
 
-          {/* 체험 모드 종료 확인 팝업 */}
+          {/* 산책 모드 종료 확인 팝업 */}
           {showPracticeExit && (
             <div style={{
               position: "absolute",
@@ -606,7 +588,7 @@ function App() {
                   <IoGameController size={52} color="rgba(180,140,255,0.9)" />
                 </div>
                 <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#fff", marginBottom: 6 }}>
-                  체험 모드 종료
+                  산책 모드 종료
                 </div>
                 <div style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.6)", marginBottom: 24, lineHeight: 1.6 }}>
                   어떻게 하시겠어요?
@@ -620,7 +602,7 @@ function App() {
                       fontSize: "0.95rem", fontWeight: 700, cursor: "pointer",
                     }}
                   >
-                    계속 체험하기
+                    계속 산책하기
                   </button>
                   <button
                     onClick={() => { setShowPracticeExit(false); exitPractice(); setShowCollection(true); }}

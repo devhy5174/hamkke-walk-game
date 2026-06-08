@@ -261,7 +261,7 @@ function ThemeDetailPopup({
         <p style={detailDesc}>{DESCRIPTIONS[theme.id]}</p>
         {allUnlocked && onPractice && (
           <button style={practiceBtn} onClick={() => onPractice(theme)}>
-            🎮 체험하기
+            🎮 산책하기
           </button>
         )}
         <button style={closeBtn} onClick={onClose}>
@@ -391,15 +391,15 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
         </div>
       </div>
 
-      {/* 체험 모드 최초 안내 팝업 */}
+      {/* 산책 모드 최초 안내 팝업 */}
       {showPracticeNotice && (
         <div style={noticeBackdrop} onClick={dismissNotice}>
           <div style={noticeCard} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: "2.8rem", marginBottom: 8 }}>🎮</div>
-            <div style={noticeTitle}>산책 체험 모드 활성화!</div>
+            <div style={noticeTitle}>산책 산책 모드 활성화!</div>
             <div style={noticeBody}>
               모든 테마를 해금했어요 🎉
-              <br />각 테마를 탭하면 <strong>체험하기</strong> 버튼이 생겨요.
+              <br />각 테마를 탭하면 <strong>산책하기</strong> 버튼이 생겨요.
               <br />
               장애물에 부딪혀도 괜찮으니 마음껏 산책해보세요!
             </div>
@@ -413,7 +413,7 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
               기록·랭킹에는 반영되지 않아요
             </div>
             <button style={noticeBtn} onClick={dismissNotice}>
-              알겠어요! 체험해볼게요 ✨
+              알겠어요! 산책해볼게요 ✨
             </button>
           </div>
         </div>
@@ -562,7 +562,7 @@ const closeBtn: CSSProperties = {
   boxShadow: "0 4px 16px rgba(61,174,121,0.3)",
 };
 
-// 체험 모드 안내 팝업
+// 산책 모드 안내 팝업
 const noticeBackdrop: CSSProperties = {
   position: "absolute",
   inset: 0,

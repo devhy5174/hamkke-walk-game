@@ -249,7 +249,7 @@ export class GameEngine {
   private reachedMilestones = new Set<number>();
   private currentThemeId = THEMES[0].id;
   private moonlightTimeLeft = -1; // -1: 미시작
-  isPracticeMode = false; // 체험 모드 — 충돌 무시, 저장 없음
+  isPracticeMode = false; // 산책 모드 — 충돌 무시, 저장 없음
   private moonlightMsgTimer = 0;
   private practiceMsgTimer = 5; // 첫 메시지 5초 후
   private finishSequence = false;
@@ -478,7 +478,7 @@ export class GameEngine {
       );
     }
 
-    // 체험 모드 — 위아래 이동
+    // 산책 모드 — 위아래 이동
     if (this.isPracticeMode) {
       const yMin = this.canvas.height * 0.12;
       const yMax = this.canvas.height * 0.80;
@@ -610,7 +610,7 @@ export class GameEngine {
       }
     }
 
-    // 아이템 스폰 — 체험 모드에서는 스킵 (테마 구경에 집중)
+    // 아이템 스폰 — 산책 모드에서는 스킵 (테마 구경에 집중)
     if (!this.isPracticeMode) {
       // 발자국 스폰
       this.footprintTimer += dtSec * 1000;
@@ -640,7 +640,7 @@ export class GameEngine {
       }
     }
 
-    // 체험 모드 테마별 말풍선
+    // 산책 모드 테마별 말풍선
     if (this.isPracticeMode) {
       this.practiceMsgTimer -= dtSec;
       if (this.practiceMsgTimer <= 0) {
