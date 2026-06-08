@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { HiSpeakerWave, HiSpeakerXMark } from "react-icons/hi2";
-import { IoPauseCircle } from "react-icons/io5";
+import { IoPauseCircle, IoGameController } from "react-icons/io5";
 import { useGame } from "./hooks/useGame";
 import { GameCanvas } from "./components/GameCanvas";
 import { GameHUD } from "./components/GameHUD";
@@ -562,7 +562,9 @@ function App() {
                 maxWidth: 300,
                 boxShadow: "0 12px 40px rgba(80,40,180,0.5)",
               }}>
-                <div style={{ fontSize: "2rem", marginBottom: 8 }}>🎮</div>
+                <div style={{ marginBottom: 8 }}>
+                  <IoGameController size={52} color="rgba(180,140,255,0.9)" />
+                </div>
                 <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#fff", marginBottom: 6 }}>
                   체험 모드 종료
                 </div>
