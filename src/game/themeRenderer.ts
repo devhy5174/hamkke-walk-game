@@ -615,9 +615,9 @@ function renderBamboo(rc: RenderCtx) {
     drawDiagBamboo(ctx, 0, y + 27, baseLen + 6,  0.98 + sway * 0.02, true,  aliveTime, slot + 3);
 
     // 우측 묶음 (3개)
-    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5,      baseLen + 10, 1.05 - sway * 0.02, false, aliveTime, slot + 4);
-    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5 + 10, baseLen + 15, 0.92 - sway * 0.02, false, aliveTime, slot + 5);
-    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5 + 20, baseLen + 7,  1.12 - sway * 0.02, false, aliveTime, slot + 6);
+    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5,      baseLen + 10, 1.05 - sway * 0.02, false);
+    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5 + 10, baseLen + 15, 0.92 - sway * 0.02, false);
+    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5 + 20, baseLen + 7,  1.12 - sway * 0.02, false);
   }
 
   // 사이드 잎 (위아래 흐름)
@@ -721,8 +721,6 @@ function drawDiagBamboo(
   len: number,
   angle: number,
   isLeft: boolean,
-  aliveTime = 0,
-  seed = 0,
 ) {
   const w = 7;
   const dir = isLeft ? 1 : -1;
