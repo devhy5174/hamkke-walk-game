@@ -26,21 +26,32 @@ export function GameCanvas({ canvasRef, engineRef }: Props) {
       const rect = canvas.getBoundingClientRect();
       return (clientX - rect.left) * (canvas.width / rect.width);
     };
+    const toCanvasY = (clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      return (clientY - rect.top) * (canvas.height / rect.height);
+    };
 
     const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
       if (engineRef.current) {
         engineRef.current.touchX = toCanvasX(e.touches[0].clientX);
+        if (engineRef.current.isPracticeMode)
+          engineRef.current.touchY = toCanvasY(e.touches[0].clientY);
       }
     };
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
       if (engineRef.current) {
         engineRef.current.touchX = toCanvasX(e.touches[0].clientX);
+        if (engineRef.current.isPracticeMode)
+          engineRef.current.touchY = toCanvasY(e.touches[0].clientY);
       }
     };
     const onTouchEnd = () => {
-      if (engineRef.current) engineRef.current.touchX = null;
+      if (engineRef.current) {
+        engineRef.current.touchX = null;
+        engineRef.current.touchY = null;
+      }
     };
 
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
@@ -51,10 +62,15 @@ export function GameCanvas({ canvasRef, engineRef }: Props) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft")  { e.preventDefault(); if (engineRef.current) engineRef.current.moveDx = -1; }
       if (e.key === "ArrowRight") { e.preventDefault(); if (engineRef.current) engineRef.current.moveDx =  1; }
+      if (e.key === "ArrowUp")    { e.preventDefault(); if (engineRef.current) engineRef.current.moveDy = -1; }
+      if (e.key === "ArrowDown")  { e.preventDefault(); if (engineRef.current) engineRef.current.moveDy =  1; }
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         if (engineRef.current) engineRef.current.moveDx = 0;
+      }
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        if (engineRef.current) engineRef.current.moveDy = 0;
       }
     };
     window.addEventListener("keydown", onKeyDown);

@@ -90,6 +90,65 @@ import obsSnoRock from "../assets/images/obstacles/obs-snow-rock.png";
 import obsMtnRock from "../assets/images/obstacles/obs-mountain-rock.png";
 
 // 파워워커 발동 시 테마별 말풍선 메시지
+const PRACTICE_MESSAGES: Record<string, string[]> = {
+  park: [
+    "꽃 향기가 솔솔~ 🌸",
+    "오늘 날씨 정말 좋다 ☀️",
+    "잔디가 푹신푹신해 🌿",
+    "나비가 날아다니네 🦋",
+    "공원 산책 최고야~",
+    "기분이 새로워지는걸? 😊",
+  ],
+  forest: [
+    "피톤치드가 느껴져~ 🌲",
+    "나뭇잎 소리가 들려 🍃",
+    "나무 그늘이 시원하다",
+    "새소리가 청아하네 🐦",
+    "여기 자주 와야겠다!",
+    "공기가 다르다, 진짜 🌿",
+  ],
+  autumn: [
+    "단풍이 진짜 예쁘다 🍁",
+    "바스락바스락~ 🍂",
+    "가을 색깔이 너무 좋아",
+    "낙엽 밟는 소리 좋다",
+    "선선한 바람이 딱이야 🍁",
+    "가을이 가장 좋은 계절이야",
+  ],
+  cherry: [
+    "꽃잎이 살랑살랑~ 🌸",
+    "와... 진짜 예쁘다",
+    "봄이 왔구나! 🌺",
+    "벚꽃 아래 걷는 기분 💕",
+    "꽃비가 내리는 것 같아 🌸",
+    "매년 오고 싶다~",
+  ],
+  snow: [
+    "발소리도 조용해지네 ❄️",
+    "눈이 너무 예뻐~",
+    "하얀 세상이 됐다! ⛄",
+    "찬 공기가 기분 좋아",
+    "겨울 산책 진짜 최고야",
+    "눈이 반짝반짝 ✨",
+  ],
+  bamboo: [
+    "대나무 스치는 소리~ 🎋",
+    "물 흐르는 소리가 들려 💧",
+    "고요하고 평화롭다...",
+    "일본 정원 같은 느낌? 🎍",
+    "바람 소리가 좋다 🌬️",
+    "마음이 차분해져 🎋",
+  ],
+  moonlight: [
+    "황금 발자국이 반짝여 ✨",
+    "별빛 아래 걷는 기분~ 🌙",
+    "달이 참 밝다 🌕",
+    "고요한 밤이야... 🌙",
+    "별이 쏟아질 것 같아 ✨",
+    "달빛이 황금빛이네 🌟",
+  ],
+};
+
 const POWER_MESSAGES: Record<string, string[]> = {
   park: [
     "날씨 좋다~ ☀️",
@@ -192,6 +251,7 @@ export class GameEngine {
   private moonlightTimeLeft = -1; // -1: 미시작
   isPracticeMode = false; // 체험 모드 — 충돌 무시, 저장 없음
   private moonlightMsgTimer = 0;
+  private practiceMsgTimer = 5; // 첫 메시지 5초 후
   private finishSequence = false;
   private finishTimer = 0;
   private photoMode = false;
@@ -201,7 +261,9 @@ export class GameEngine {
   }
 
   touchX: number | null = null;
+  touchY: number | null = null;
   moveDx = 0;
+  moveDy = 0;
   playerPos = { x: 0, y: 0, width: 0, height: 0 }; // render마다 갱신
 
   private characterImg: HTMLImageElement | null = null;
@@ -307,6 +369,7 @@ export class GameEngine {
     this.reachedMilestones = new Set<number>();
     this.currentThemeId = getThemeByDistance(startDistance).id;
     this.moonlightTimeLeft = -1;
+    this.practiceMsgTimer = 5;
     this.finishSequence = false;
     this.finishTimer = 0;
     this.running = true;
@@ -413,6 +476,21 @@ export class GameEngine {
         pathLeft,
         Math.min(player.x, pathRight - player.width),
       );
+    }
+
+    // 체험 모드 — 위아래 이동
+    if (this.isPracticeMode) {
+      const yMin = this.canvas.height * 0.12;
+      const yMax = this.canvas.height * 0.80;
+      if (this.touchY !== null) {
+        const targetY = Math.max(yMin, Math.min(this.touchY - player.height / 2, yMax));
+        const dy = targetY - player.y;
+        const maxStep = PLAYER_SPEED * 1.8 * dtSec;
+        player.y += Math.sign(dy) * Math.min(Math.abs(dy), maxStep);
+      } else if (this.moveDy !== 0) {
+        player.y += this.moveDy * PLAYER_SPEED * dtSec;
+        player.y = Math.max(yMin, Math.min(player.y, yMax));
+      }
     }
 
     // 파워모드 카운트다운
@@ -554,6 +632,17 @@ export class GameEngine {
           this.clockTimer = 0;
           this.clockItems.push(makeClockItem(width));
         }
+      }
+    }
+
+    // 체험 모드 테마별 말풍선
+    if (this.isPracticeMode) {
+      this.practiceMsgTimer -= dtSec;
+      if (this.practiceMsgTimer <= 0) {
+        const tid = this.currentThemeId;
+        const msgs = PRACTICE_MESSAGES[tid] ?? PRACTICE_MESSAGES["park"];
+        this.onDodger?.(msgs[Math.floor(Math.random() * msgs.length)]);
+        this.practiceMsgTimer = 6 + Math.random() * 5; // 6~11초 간격
       }
     }
 
