@@ -1307,18 +1307,6 @@ export class GameEngine {
   private drawRock(x: number, y: number, w: number, h: number, obsId = 0) {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const { ctx } = this;
-    // 대나무: 홀수=죽순🎍 / 짝수=돌맹이 이미지 번갈아
-    if (tid === "bamboo" && obsId % 2 === 1) {
-      ctx.save();
-      ctx.font = `${h * 1.1}px serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.shadowColor = "rgba(40,40,40,0.4)";
-      ctx.shadowBlur = 6;
-      ctx.fillText("🎍", x + w / 2, y + h / 2);
-      ctx.restore();
-      return;
-    }
     const img = this.obsRockByTheme[tid] ?? this.obsRockByTheme["default"];
     ctx.save();
     ctx.filter = "saturate(160%) contrast(115%) brightness(105%)";

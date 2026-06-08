@@ -143,7 +143,6 @@ export function TipsModal({ onClose }: Props) {
               <ObsItem src={obsCheRock} label="벚꽃낙엽" sub="벚꽃" />
               <ObsItem src={obsSnoRock} label="눈사람" sub="눈길" />
               <ObsItem src={obsMtnRock} label="등산객" sub="대나무" />
-              <ObsItemEmoji emoji="🎍" label="죽순" sub="대나무" />
             </div>
           </Section>
 

@@ -150,29 +150,7 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
         }
       } else {
         // 장애물 오버레이 (이미지 로드 후)
-        // 대나무: 죽순🎍 + 돌맹이 나란히
-        if (theme.id === "bamboo") {
-          ctx.save();
-          ctx.font = `50px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.shadowColor = "rgba(40,40,40,0.4)";
-          ctx.shadowBlur = 6;
-          ctx.fillText("🎍", pathLeft + 24, h * 0.52);
-          ctx.restore();
-          if (rockImg.complete && rockImg.naturalWidth) {
-            ctx.save();
-            ctx.filter = "saturate(1.4) contrast(1.1)";
-            ctx.drawImage(
-              rockImg,
-              pathLeft + pathWidth * 0.45,
-              h * 0.62,
-              44,
-              48,
-            );
-            ctx.restore();
-          }
-        } else if (rockImg.complete && rockImg.naturalWidth) {
+        if (rockImg.complete && rockImg.naturalWidth) {
           ctx.save();
           ctx.filter = "saturate(1.4) contrast(1.1)";
           ctx.drawImage(rockImg, pathLeft + 12, h * 0.52, 50, 54);
