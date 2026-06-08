@@ -454,7 +454,7 @@ function drawCherryFlower(ctx: CanvasRenderingContext2D, cx: number, cy: number,
 
 // ❄️ 눈길 (눈 자국 선 + 눈송이)
 function renderSnow(rc: RenderCtx) {
-  const { ctx, width, height, scrollY, aliveTime, playerY } = rc;
+  const { ctx, width, height, scrollY, aliveTime } = rc;
 
   // ── 캐릭터 이동 경로 발자국 도장 ──
   if (rc.snowTrail && rc.snowTrail.length > 0 && rc.snowFootprintImg) {
