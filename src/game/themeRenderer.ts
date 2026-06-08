@@ -599,6 +599,27 @@ function renderBamboo(rc: RenderCtx) {
     drawBambooOverhang(ctx, width, y + branchPeriod * 0.5,  rightEdge, sway,  false, slot + 2, aliveTime);
   }
 
+  // 사선 대나무 묶음 (좌우 각 1묶음씩)
+  const diagPeriod = 160;
+  const diagWorld = Math.floor(scrollY / diagPeriod);
+  for (let i = 0; i <= Math.ceil((height + diagPeriod * 2) / diagPeriod); i++) {
+    const slot = diagWorld + i;
+    const y = (scrollY % diagPeriod) - diagPeriod + i * diagPeriod;
+    const sway = Math.sin(aliveTime * 0.7 + slot * 1.1) * 1.2;
+    const baseLen = 28 + (Math.abs(slot) % 3) * 7;
+
+    // 좌측 묶음 (4개)
+    drawDiagBamboo(ctx, 0, y,      baseLen,      1.05 + sway * 0.02, true,  aliveTime, slot);
+    drawDiagBamboo(ctx, 0, y + 9,  baseLen + 9,  0.90 + sway * 0.02, true,  aliveTime, slot + 1);
+    drawDiagBamboo(ctx, 0, y + 18, baseLen + 3,  1.15 + sway * 0.02, true,  aliveTime, slot + 2);
+    drawDiagBamboo(ctx, 0, y + 27, baseLen + 6,  0.98 + sway * 0.02, true,  aliveTime, slot + 3);
+
+    // 우측 묶음 (3개)
+    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5,      baseLen + 10, 1.05 - sway * 0.02, false, aliveTime, slot + 4);
+    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5 + 10, baseLen + 15, 0.92 - sway * 0.02, false, aliveTime, slot + 5);
+    drawDiagBamboo(ctx, width, y + diagPeriod * 0.5 + 20, baseLen + 7,  1.12 - sway * 0.02, false, aliveTime, slot + 6);
+  }
+
   // 사이드 잎 (위아래 흐름)
   const leafPeriod = 44;
   const leafWorld = Math.floor(scrollY / leafPeriod);
@@ -691,6 +712,36 @@ function drawBambooOverhang(
     ctx.fill();
     ctx.restore();
   }
+}
+
+function drawDiagBamboo(
+  ctx: CanvasRenderingContext2D,
+  edgeX: number,
+  baseY: number,
+  len: number,
+  angle: number,
+  isLeft: boolean,
+  aliveTime = 0,
+  seed = 0,
+) {
+  const w = 7;
+  const dir = isLeft ? 1 : -1;
+
+  ctx.save();
+  ctx.translate(edgeX, baseY);
+  ctx.rotate(isLeft ? -angle : angle);
+
+  // 본체
+  ctx.fillStyle = '#4A8A3A';
+  ctx.fillRect(0, -w / 2, len * dir, w);
+  // 마디
+  ctx.fillStyle = '#3A7A2A';
+  ctx.fillRect(len * dir * 0.38, -w / 2 - 1, 2.5, w + 2);
+  ctx.fillRect(len * dir * 0.70, -w / 2 - 1, 2.5, w + 2);
+
+  // 잎 없음
+
+  ctx.restore();
 }
 
 function drawBambooStalk(ctx: CanvasRenderingContext2D, cx: number, cy: number, segH: number) {
