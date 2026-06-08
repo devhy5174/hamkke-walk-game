@@ -183,12 +183,13 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
 // ── 테마 상세 팝업 ───────────────────────────────────────────────────────────
 
 function ThemeDetailPopup({
-  theme, index, onClose, onPractice,
+  theme, index, onClose, onPractice, allUnlocked,
 }: {
   theme: GameTheme;
   index: number;
   onClose: () => void;
   onPractice?: (theme: GameTheme) => void;
+  allUnlocked: boolean;
 }) {
   return (
     <div style={detailBackdrop} onClick={onClose}>
@@ -204,7 +205,7 @@ function ThemeDetailPopup({
           </div>
         </div>
         <p style={detailDesc}>{DESCRIPTIONS[theme.id]}</p>
-        {onPractice && (
+        {allUnlocked && onPractice && (
           <button style={practiceBtn} onClick={() => onPractice(theme)}>
             🎮 체험하기
           </button>
@@ -314,6 +315,7 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
           index={selected.index}
           onClose={() => setSelected(null)}
           onPractice={handlePractice}
+          allUnlocked={allUnlocked}
         />
       )}
     </>
