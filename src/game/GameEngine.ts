@@ -375,6 +375,7 @@ export class GameEngine {
 
   private get speedMult(): number {
     if (this.currentThemeId === "moonlight") return MOONLIGHT_SPEED;
+    if (this.isPracticeMode) return 1.2;
     return Math.min(1 + this.aliveTime * SPEED_RAMP, SPEED_CAP);
   }
 
@@ -526,30 +527,33 @@ export class GameEngine {
       }
     }
 
-    // 발자국 스폰
-    this.footprintTimer += dtSec * 1000;
-    if (this.footprintTimer >= FOOTPRINT_SPAWN_MS / sm) {
-      this.footprintTimer = 0;
-      this.footprints.push(makeFootprint(width));
-    }
+    // 아이템 스폰 — 체험 모드에서는 스킵 (테마 구경에 집중)
+    if (!this.isPracticeMode) {
+      // 발자국 스폰
+      this.footprintTimer += dtSec * 1000;
+      if (this.footprintTimer >= FOOTPRINT_SPAWN_MS / sm) {
+        this.footprintTimer = 0;
+        this.footprints.push(makeFootprint(width));
+      }
 
-    // 물병 스폰
-    this.waterTimer += dtSec * 1000;
-    if (this.waterTimer >= WATER_SPAWN_MS / sm) {
-      this.waterTimer = 0;
-      this.waterBottles.push(makeWaterBottle(width));
-    }
+      // 물병 스폰
+      this.waterTimer += dtSec * 1000;
+      if (this.waterTimer >= WATER_SPAWN_MS / sm) {
+        this.waterTimer = 0;
+        this.waterBottles.push(makeWaterBottle(width));
+      }
 
-    // 시계 아이템 스폰 — 단풍길(350m)부터, 슬로우·달빛길 중엔 스폰 안 함
-    if (
-      !this.isSlowMode &&
-      this.distanceMeters >= 350 &&
-      this.currentThemeId !== "moonlight"
-    ) {
-      this.clockTimer += dtSec * 1000;
-      if (this.clockTimer >= CLOCK_SPAWN_MS / sm) {
-        this.clockTimer = 0;
-        this.clockItems.push(makeClockItem(width));
+      // 시계 아이템 스폰 — 단풍길(350m)부터, 슬로우·달빛길 중엔 스폰 안 함
+      if (
+        !this.isSlowMode &&
+        this.distanceMeters >= 350 &&
+        this.currentThemeId !== "moonlight"
+      ) {
+        this.clockTimer += dtSec * 1000;
+        if (this.clockTimer >= CLOCK_SPAWN_MS / sm) {
+          this.clockTimer = 0;
+          this.clockItems.push(makeClockItem(width));
+        }
       }
     }
 
