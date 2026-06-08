@@ -505,11 +505,11 @@ function renderSnow(rc: RenderCtx) {
       if (screenY > height + 20 || screenY < -size) continue;
       const alpha = Math.max(0, 0.7 * (1 - p.yd / height));
       const isLeft = p.idx % 2 === 0;
-      const offsetX = isLeft ? -14 : 2;
+      const offsetX = isLeft ? -size / 2 - 6 : 6;  // 중심 기준 대칭 ±(size/2+6)
       const angle = isLeft ? -0.2 : 0.2;
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(p.x + offsetX + size / 2, screenY);
+      ctx.translate(p.x + offsetX, screenY);
       ctx.rotate(angle);
       ctx.drawImage(img, -size / 2, -size / 2, size, size);
       ctx.restore();
@@ -887,14 +887,14 @@ function renderStars(rc: RenderCtx) {
       const pulse = 0.75 + Math.abs(Math.sin(aliveTime * 2.5 + p.idx * 0.8)) * 0.25;
       const alpha = fade * pulse;
       const isLeft = p.idx % 2 === 0;
-      const offsetX = isLeft ? -16 : 4;
+      const offsetX = isLeft ? -size / 2 - 6 : 6;
       const angle = isLeft ? -0.2 : 0.2;
 
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur  = 14 * pulse;
-      ctx.translate(p.x + offsetX + size / 2, screenY);
+      ctx.translate(p.x + offsetX, screenY);
       ctx.rotate(angle);
       ctx.drawImage(img, -size / 2, -size / 2, size, size);
       ctx.restore();

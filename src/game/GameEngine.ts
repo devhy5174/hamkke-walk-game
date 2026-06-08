@@ -240,6 +240,7 @@ export class GameEngine {
     idx: number;
   }> = [];
   private snowTrailTimer = 0;
+  private snowTrailIdx = 0; // 필터링 후에도 홀짝 패턴 유지용 단조 증가 카운터
 
   private running = false;
   private paused = false;
@@ -364,6 +365,7 @@ export class GameEngine {
     this.slowEaseTimer = 0;
     this.snowTrail = [];
     this.snowTrailTimer = 0;
+    this.snowTrailIdx = 0;
     this.footprintTimer = 0;
     this.waterTimer = 0;
     this.clockTimer = 0;
@@ -474,7 +476,7 @@ export class GameEngine {
               x: this.player.x + this.player.width / 2,
               absY: this.player.y + this.player.height,
               yd: 0,
-              idx: this.snowTrail.length,
+              idx: this.snowTrailIdx++,
             });
           }
           for (const p of this.snowTrail) p.yd += scrollDelta;
@@ -607,7 +609,7 @@ export class GameEngine {
           x: this.player.x + this.player.width / 2,
           absY: this.player.y + this.player.height,
           yd: 0,
-          idx: this.snowTrail.length,
+          idx: this.snowTrailIdx++,
         });
       }
       for (const p of this.snowTrail) p.yd += scrollDelta;
@@ -1461,8 +1463,11 @@ export class GameEngine {
 
       if (obs.dodgerType === "hiker") {
         // 등산객: 두 메시지 순차 표시
-        const messages = ["앗! 먼저 가세요~! 🙏", "바람 소리가 참 좋네요~ 🌬️"];
-        const msgDur = 1.0;  // 메시지당 지속 시간
+        const messages = [
+          "앗! 먼저 가세요~! 🙏",
+          "대나무숲 공기가 참 좋죠~? 🌬️",
+        ];
+        const msgDur = 1.0; // 메시지당 지속 시간
         const msgIdx = Math.floor(elapsed / msgDur);
         if (msgIdx < messages.length) {
           const t = elapsed % msgDur;
@@ -1471,18 +1476,19 @@ export class GameEngine {
           ctx.globalAlpha = Math.max(0, alpha);
           const text = messages[msgIdx];
           ctx.font = "bold 13px sans-serif";
-          const tw = ctx.measureText(text).width;
-          const bx = cx - tw / 2 - 8;
-          const by = y - 44 - rise;
+          // 이모지 너비 측정 오차 보정: 패딩 넉넉하게
+          const tw = ctx.measureText(text).width + 16;
+          const bx = cx - tw / 2 - 10;
+          const by = y - 46 - rise;
           ctx.fillStyle = "#fff";
           ctx.strokeStyle = "rgba(0,0,0,0.1)";
           ctx.lineWidth = 1;
           ctx.beginPath();
-          rrect(ctx, bx, by, tw + 16, 24, 12);
+          rrect(ctx, bx, by, tw + 20, 26, 12);
           ctx.fill();
           ctx.stroke();
           ctx.fillStyle = "#2D7D52";
-          ctx.fillText(text, cx, by + 16);
+          ctx.fillText(text, cx, by + 17);
         }
       } else if (elapsed < 0.8) {
         // 다람쥐: "!" 표시
