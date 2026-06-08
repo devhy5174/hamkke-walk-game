@@ -26,6 +26,59 @@ export function TipsModal({ onClose }: Props) {
         </div>
 
         <div style={scrollArea}>
+          {/* 도전 자극 배너 */}
+          <div
+            style={{
+              background: "linear-gradient(135deg, #0A0A1A, #1A0F3A)",
+              border: "1.5px solid rgba(255,215,0,0.4)",
+              borderRadius: 18,
+              padding: "16px 18px",
+              marginBottom: 20,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* 별빛 배경 효과 */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "radial-gradient(circle at 80% 50%, rgba(255,215,0,0.08) 0%, transparent 60%)",
+                pointerEvents: "none",
+              }}
+            />
+            <div>
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: "0.92rem",
+                  color: "#FFD700",
+                  marginBottom: 4,
+                  letterSpacing: 0.3,
+                }}
+              >
+                ✨ 히든 보너스 테마가 숨겨져 있어요!
+              </div>
+              <div
+                style={{
+                  fontSize: "0.78rem",
+                  color: "rgba(255,215,0,0.75)",
+                  lineHeight: 1.55,
+                }}
+              >
+                6개 테마를 모두 완주하면{" "}
+                <strong style={{ color: "#FFD700" }}>비밀 테마</strong>와<br />
+                <strong style={{ color: "#FFD700" }}>산책 모드</strong>가
+                해금돼요. 도전해보세요! 🏆
+              </div>
+            </div>
+          </div>
+
           {/* 기본 조작 */}
           <Section title="기본 조작">
             <Row
@@ -228,8 +281,19 @@ function SpecialRow({
 }) {
   return (
     <div style={specialCard}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-        <img src={src} alt={label} style={{ width: 40, height: 40, objectFit: "contain" }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 5,
+        }}
+      >
+        <img
+          src={src}
+          alt={label}
+          style={{ width: 40, height: 40, objectFit: "contain" }}
+        />
         <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#2D7D52" }}>
           {label}
         </span>
@@ -263,7 +327,6 @@ function ObsItem({
     </div>
   );
 }
-
 
 // ── 스타일 ──────────────────────────────────────────────────────────────────
 
