@@ -176,10 +176,23 @@ function drawPineTree(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
   }
 }
 
-// 🍁 단풍 낙엽 (사이드 잔디에만)
+// 🍁 단풍 낙엽 + 단풍나무 가지
 function renderLeaves(rc: RenderCtx) {
-  const { ctx, width, pathLeft, pathWidth, height, scrollY } = rc;
+  const { ctx, width, pathLeft, pathWidth, height, scrollY, aliveTime } = rc;
   const rightEdge = pathLeft + pathWidth;
+
+  // ── 단풍나무 가지 ──
+  const branchPeriod = 180;
+  const branchWorld = Math.floor(scrollY / branchPeriod);
+  for (let i = 0; i <= Math.ceil((height + branchPeriod * 2) / branchPeriod); i++) {
+    const slot = branchWorld + i;
+    const y = (scrollY % branchPeriod) - branchPeriod + i * branchPeriod;
+    const sway = Math.sin(aliveTime * 0.4 + slot * 0.8) * 2;
+    drawAutumnBranch(ctx, 0,     y,                      pathLeft,  sway,  true,  slot);
+    drawAutumnBranch(ctx, width, y + branchPeriod * 0.5, rightEdge, sway,  false, slot + 3);
+  }
+
+  // ── 낙엽 (사이드) ──
   const period = 42;
   const lRange = Math.max(0, pathLeft - 14);
   const rRange = Math.max(0, width - rightEdge - 14);
@@ -197,6 +210,96 @@ function renderLeaves(rc: RenderCtx) {
       drawLeaf(ctx, rx, y + j * (period / 2) + 8, colors[(Math.abs(slot) + j + 2) % colors.length], -angle);
     }
   }
+}
+
+function drawAutumnBranch(
+  ctx: CanvasRenderingContext2D,
+  edgeX: number,
+  baseY: number,
+  pathEdgeX: number,
+  sway: number,
+  isLeft: boolean,
+  slot: number,
+) {
+  const dir = isLeft ? 1 : -1;
+  const branchLen = Math.abs(pathEdgeX - edgeX) + 12;
+
+  ctx.save();
+  ctx.translate(edgeX, baseY);
+
+  // 메인 줄기
+  ctx.strokeStyle = '#5C3317';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 30);
+  ctx.bezierCurveTo(
+    dir * branchLen * 0.3, 15 + sway,
+    dir * branchLen * 0.7, -10 + sway,
+    dir * branchLen,       -30 + sway,
+  );
+  ctx.stroke();
+
+  // 서브 가지
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#6B3A1F';
+  ctx.beginPath();
+  ctx.moveTo(dir * branchLen * 0.45, 5 + sway * 0.5);
+  ctx.bezierCurveTo(
+    dir * branchLen * 0.55, -15 + sway,
+    dir * branchLen * 0.65, -25 + sway,
+    dir * branchLen * 0.7,  -38 + sway,
+  );
+  ctx.stroke();
+
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(dir * branchLen * 0.7, -10 + sway);
+  ctx.bezierCurveTo(
+    dir * branchLen * 0.78, -5  + sway,
+    dir * branchLen * 0.85,  5  + sway,
+    dir * branchLen * 0.88,  14 + sway,
+  );
+  ctx.stroke();
+
+  // 단풍잎 클러스터
+  const leafPositions = [
+    { x: dir * branchLen * 0.55, y: -10 + sway, count: 4 },
+    { x: dir * branchLen,        y: -30 + sway, count: 6 },
+    { x: dir * branchLen * 0.7,  y: -38 + sway, count: 4 },
+    { x: dir * branchLen * 0.88, y:  14 + sway, count: 3 },
+  ];
+  const leafColors = ['#D2691E', '#FF6347', '#DAA520', '#FF8C00', '#CC3300', '#E8A020'];
+
+  for (const fp of leafPositions) {
+    const spread = 9 + Math.abs(Math.sin(slot * 1.3 + fp.x)) * 5;
+    for (let k = 0; k < fp.count; k++) {
+      const angle = (k / fp.count) * Math.PI * 2;
+      const lx = fp.x + Math.cos(angle) * spread * 0.6;
+      const ly = fp.y + Math.sin(angle) * spread * 0.5;
+      const color = leafColors[(Math.abs(slot) + k) % leafColors.length];
+      const rot = angle + Math.sin(slot * 0.7 + k) * 0.5;
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 5, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    // 중심 잎
+    const cc = leafColors[Math.abs(slot + 1) % leafColors.length];
+    ctx.save();
+    ctx.translate(fp.x, fp.y);
+    ctx.fillStyle = cc;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5.5, 3.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore();
 }
 
 function drawLeaf(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: string, angle: number) {
