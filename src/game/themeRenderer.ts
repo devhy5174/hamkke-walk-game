@@ -609,10 +609,10 @@ function renderBamboo(rc: RenderCtx) {
     const baseLen = 28 + (Math.abs(slot) % 3) * 7;
 
     // 좌측 묶음 (4개)
-    drawDiagBamboo(ctx, 0, y,      baseLen,      1.05 + sway * 0.02, true,  aliveTime, slot);
-    drawDiagBamboo(ctx, 0, y + 9,  baseLen + 9,  0.90 + sway * 0.02, true,  aliveTime, slot + 1);
-    drawDiagBamboo(ctx, 0, y + 18, baseLen + 3,  1.15 + sway * 0.02, true,  aliveTime, slot + 2);
-    drawDiagBamboo(ctx, 0, y + 27, baseLen + 6,  0.98 + sway * 0.02, true,  aliveTime, slot + 3);
+    drawDiagBamboo(ctx, 0, y,      baseLen,      1.05 + sway * 0.02, true);
+    drawDiagBamboo(ctx, 0, y + 9,  baseLen + 9,  0.90 + sway * 0.02, true);
+    drawDiagBamboo(ctx, 0, y + 18, baseLen + 3,  1.15 + sway * 0.02, true);
+    drawDiagBamboo(ctx, 0, y + 27, baseLen + 6,  0.98 + sway * 0.02, true);
 
     // 우측 묶음 (3개)
     drawDiagBamboo(ctx, width, y + diagPeriod * 0.5,      baseLen + 10, 1.05 - sway * 0.02, false);
