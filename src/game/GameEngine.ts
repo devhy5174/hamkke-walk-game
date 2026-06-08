@@ -1389,6 +1389,8 @@ export class GameEngine {
     }
     ctx.translate(cx, cy + bob);
     ctx.rotate(tilt);
+    // 이동 방향으로 이미지 좌우 반전
+    if (driftVx && driftVx > 0) ctx.scale(-1, 1);
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
     ctx.restore();
 
