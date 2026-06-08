@@ -171,7 +171,7 @@ export class GameEngine {
   private isSlowMode = false;
   private slowTimeLeft = 0;
   private slowEaseTimer = 0; // 시계 종료 후 속도 페이드인 카운트다운
-  private snowTrail: Array<{ x: number; yd: number }> = [];
+  private snowTrail: Array<{ x: number; yd: number; idx: number }> = [];
   private snowTrailTimer = 0;
 
   private running = false;
@@ -208,6 +208,7 @@ export class GameEngine {
   private readonly footprintImg = GameEngine.loadImg(footprintSrc);
   private footprintColorized: HTMLCanvasElement | null = null;
   private footprintGolden: HTMLCanvasElement | null = null;
+  private footprintSnow: HTMLCanvasElement | null = null;
   private readonly waterBottleImg = GameEngine.loadImg(waterBottleSrc);
 
   // 돌: 숲·산은 그루터기, 나머지는 기본 돌
@@ -452,9 +453,9 @@ export class GameEngine {
     // 눈길 자국 트레일 포인트 수집
     if (this.currentThemeId === 'snow' && this.player) {
       this.snowTrailTimer += dtSec;
-      if (this.snowTrailTimer >= 0.04) {
+      if (this.snowTrailTimer >= 0.18) {
         this.snowTrailTimer = 0;
-        this.snowTrail.push({ x: this.player.x + this.player.width / 2, yd: 0 });
+        this.snowTrail.push({ x: this.player.x + this.player.width / 2, yd: 0, idx: this.snowTrail.length });
       }
       for (const p of this.snowTrail) p.yd += scrollDelta;
       this.snowTrail = this.snowTrail.filter(p => p.yd < this.canvas.height + 20);
@@ -721,6 +722,7 @@ export class GameEngine {
       playerCx: this.player ? this.player.x + this.player.width / 2 : undefined,
       playerY: this.player ? this.player.y + this.player.height : undefined,
       snowTrail: this.currentThemeId === 'snow' ? this.snowTrail : undefined,
+      snowFootprintImg: this.currentThemeId === 'snow' ? this.getSnowFootprint() : undefined,
     };
 
     // ── 배경 + 장식 (테마별 렌더링) ──
@@ -1099,6 +1101,25 @@ export class GameEngine {
     return this.footprintColorized;
   }
 
+  private getSnowFootprint(): HTMLCanvasElement | null {
+    if (this.footprintSnow) return this.footprintSnow;
+    if (!this.footprintImg.complete || !this.footprintImg.naturalWidth) return null;
+    const size = 64;
+    const offscreen = document.createElement("canvas");
+    offscreen.width = size;
+    offscreen.height = size;
+    const oc = offscreen.getContext("2d")!;
+    oc.drawImage(this.footprintImg, 0, 0, size, size);
+    const data = oc.getImageData(0, 0, size, size);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] > 20) { d[i] = 110; d[i + 1] = 150; d[i + 2] = 195; }
+    }
+    oc.putImageData(data, 0, 0);
+    this.footprintSnow = offscreen;
+    return this.footprintSnow;
+  }
+
   private getGoldenFootprint(): HTMLCanvasElement | HTMLImageElement {
     if (this.footprintGolden) return this.footprintGolden;
     if (!this.footprintImg.complete || !this.footprintImg.naturalWidth)
@@ -1305,6 +1326,22 @@ export class GameEngine {
     ctx.shadowBlur = 4;
     ctx.drawImage(img, x, y, w, h);
     ctx.restore();
+
+    // 눈길: 돌 위에 쌓인 눈
+    if (tid === "snow") {
+      const cx = x + w / 2;
+      const topY = y + h * 0.18;
+      ctx.save();
+      ctx.fillStyle = "rgba(228,238,252,1)";
+      ctx.beginPath();
+      ctx.ellipse(cx, topY, w * 0.3, h * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,1)";
+      ctx.beginPath();
+      ctx.ellipse(cx - w * 0.06, topY - h * 0.04, w * 0.14, h * 0.08, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   private drawPuddle(x: number, y: number, w: number, h: number) {

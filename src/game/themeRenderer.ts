@@ -11,7 +11,8 @@ export interface RenderCtx {
   aliveTime: number;
   playerCx?: number;
   playerY?: number;
-  snowTrail?: Array<{ x: number; yd: number }>;
+  snowTrail?: Array<{ x: number; yd: number; idx: number }>;
+  snowFootprintImg?: HTMLCanvasElement | null;
 }
 
 // ── 배경 (잔디 + 길 + 발자국 패턴 + 풀잎) ───────────────────────────────
@@ -352,28 +353,24 @@ function drawCherryFlower(ctx: CanvasRenderingContext2D, cx: number, cy: number,
 function renderSnow(rc: RenderCtx) {
   const { ctx, width, height, scrollY, aliveTime, playerCx, playerY } = rc;
 
-  // ── 캐릭터 이동 경로 눈 자국 곡선 ──
-  if (playerCx !== undefined && playerY !== undefined && rc.snowTrail && rc.snowTrail.length > 1) {
-    const trail = rc.snowTrail;
-    const trailGrad = ctx.createLinearGradient(0, playerY, 0, playerY + height);
-    trailGrad.addColorStop(0,   'rgba(130,165,200,0.6)');
-    trailGrad.addColorStop(0.5, 'rgba(150,180,210,0.25)');
-    trailGrad.addColorStop(1,   'rgba(150,180,210,0)');
-
-    ctx.save();
-    ctx.strokeStyle = trailGrad;
-    ctx.lineWidth   = 3;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-
-    // 최신 포인트(작은 yd)부터 오래된 포인트(큰 yd) 순으로 그리기
-    ctx.beginPath();
-    ctx.moveTo(playerCx, playerY);
-    for (let i = trail.length - 1; i >= 0; i--) {
-      ctx.lineTo(trail[i].x, playerY + trail[i].yd);
+  // ── 캐릭터 이동 경로 발자국 도장 ──
+  if (playerY !== undefined && rc.snowTrail && rc.snowTrail.length > 0 && rc.snowFootprintImg) {
+    const img = rc.snowFootprintImg;
+    const size = 28;
+    for (const p of rc.snowTrail) {
+      const screenY = playerY + p.yd;
+      if (screenY > height + 20) continue;
+      const alpha = Math.max(0, 0.7 * (1 - p.yd / height));
+      const isLeft = p.idx % 2 === 0;
+      const offsetX = isLeft ? -14 : 2;
+      const angle = isLeft ? -0.2 : 0.2;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(p.x + offsetX + size / 2, screenY);
+      ctx.rotate(angle);
+      ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      ctx.restore();
     }
-    ctx.stroke();
-    ctx.restore();
   }
 
   // ── 눈송이 낙하 ──
@@ -390,6 +387,7 @@ function renderSnow(rc: RenderCtx) {
     }
   }
 }
+
 
 function drawSnowflake(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
   ctx.strokeStyle = 'rgba(200,230,255,0.75)';
