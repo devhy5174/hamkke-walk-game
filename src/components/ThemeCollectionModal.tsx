@@ -177,6 +177,21 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
           ctx.filter = "saturate(1.4) contrast(1.1)";
           ctx.drawImage(rockImg, pathLeft + 12, h * 0.52, 50, 54);
           ctx.restore();
+          // 눈길: 돌 위에 눈 쌓임
+          if (theme.id === "snow") {
+            const rx = pathLeft + 12, ry = h * 0.52, rw = 50, rh = 54;
+            const cx = rx + rw / 2, topY = ry + rh * 0.18;
+            ctx.save();
+            ctx.fillStyle = "rgba(228,238,252,1)";
+            ctx.beginPath();
+            ctx.ellipse(cx, topY, rw * 0.3, rh * 0.18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "rgba(255,255,255,1)";
+            ctx.beginPath();
+            ctx.ellipse(cx - rw * 0.06, topY - rh * 0.04, rw * 0.14, rh * 0.08, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
         }
         if (puddleImg.complete && puddleImg.naturalWidth) {
           ctx.save();
