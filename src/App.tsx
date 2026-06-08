@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { HiSpeakerWave, HiSpeakerXMark } from "react-icons/hi2";
-import { IoPauseCircle, IoGameController } from "react-icons/io5";
+import { IoPauseCircle, IoGameController, IoHelpCircle } from "react-icons/io5";
 import { useGame } from "./hooks/useGame";
 import { GameCanvas } from "./components/GameCanvas";
 import { GameHUD } from "./components/GameHUD";
@@ -11,6 +11,7 @@ import { PowerOverlay } from "./components/PowerOverlay";
 import { RecordsModal } from "./components/RecordsModal";
 import { RankingModal } from "./components/RankingModal";
 import { ThemeCollectionModal } from "./components/ThemeCollectionModal";
+import { TipsModal } from "./components/TipsModal";
 import { CharacterSelect } from "./components/CharacterSelect";
 import { SpeechBubble } from "./components/SpeechBubble";
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
@@ -60,6 +61,7 @@ function App() {
   const [showRanking, setShowRanking] = useState(false);
   const [showRankingViewOnly, setShowRankingViewOnly] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
+  const [showTips, setShowTips] = useState(false);
   const [rankingDone, setRankingDone] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState(getSavedCharId());
 
@@ -181,6 +183,14 @@ function App() {
               onClick={() => setShowRankingViewOnly(true)}
             >
               🌍 전체 랭킹 보기
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => setShowTips(true)}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            >
+              <IoHelpCircle size={16} />
+              게임 방법 보기
             </button>
           </div>
         </div>
@@ -470,6 +480,7 @@ function App() {
         />
       )}
 
+      {showTips && <TipsModal onClose={() => setShowTips(false)} />}
       {showCollection && (
         <ThemeCollectionModal
           onClose={() => setShowCollection(false)}
