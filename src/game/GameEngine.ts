@@ -21,6 +21,7 @@ import {
   CLOCK_SPAWN_MS,
   SLOW_DURATION,
   SLOW_FACTOR,
+  SLOW_EASE_DURATION,
   POWER_SPEED_BOOST,
   DISTANCE_SPEED,
   OBSTACLE_BASE_SPEED,
@@ -169,6 +170,7 @@ export class GameEngine {
   private powerTimeLeft = 0;
   private isSlowMode = false;
   private slowTimeLeft = 0;
+  private slowEaseTimer = 0; // 시계 종료 후 속도 페이드인 카운트다운
 
   private running = false;
   private paused = false;
@@ -286,6 +288,7 @@ export class GameEngine {
     this.powerTimeLeft = 0;
     this.isSlowMode = false;
     this.slowTimeLeft = 0;
+    this.slowEaseTimer = 0;
     this.footprintTimer = 0;
     this.waterTimer = 0;
     this.clockTimer = 0;
@@ -375,11 +378,16 @@ export class GameEngine {
     const { width } = this.canvas;
     const sm = this.speedMult;
     // 파워모드 > 슬로우 우선순위 (동시에 발동 시 파워모드 적용)
+    // 시계 종료 후 slowEaseTimer 동안 0.5→1.0으로 선형 페이드인
+    const slowEaseFactor =
+      this.slowEaseTimer > 0
+        ? SLOW_FACTOR + (1 - SLOW_FACTOR) * (1 - this.slowEaseTimer / SLOW_EASE_DURATION)
+        : 1;
     const boost = this.isPowerMode
       ? POWER_SPEED_BOOST
       : this.isSlowMode
         ? SLOW_FACTOR
-        : 1;
+        : slowEaseFactor;
     const pathLeft = width * ROAD_L;
     const pathRight = width * ROAD_R;
 
@@ -421,10 +429,16 @@ export class GameEngine {
       if (this.slowTimeLeft <= 0) {
         this.isSlowMode = false;
         this.slowTimeLeft = 0;
+        this.slowEaseTimer = SLOW_EASE_DURATION; // 속도 페이드인 시작
         this.emitUpdate();
       } else if (Math.ceil(this.slowTimeLeft) !== prevCeil) {
         this.emitUpdate();
       }
+    }
+
+    // 시계 종료 후 속도 페이드인
+    if (this.slowEaseTimer > 0) {
+      this.slowEaseTimer = Math.max(0, this.slowEaseTimer - dtSec);
     }
 
     // 배경 스크롤

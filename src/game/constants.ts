@@ -31,6 +31,7 @@ export const CLOCK_RADIUS = 16;
 export const CLOCK_SPAWN_MS = 5500; // 물병(2500)보다 2배 이상 희귀
 export const SLOW_DURATION = 6; // 초
 export const SLOW_FACTOR = 0.5; // 슬로우 중 속도 배율 (절반)
+export const SLOW_EASE_DURATION = 1.2; // 시계 종료 후 속도 복귀 페이드인 (초)
 
 // 파워워커 모드
 export const GAUGE_CAPACITY = 10;
