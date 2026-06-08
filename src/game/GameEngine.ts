@@ -106,6 +106,9 @@ const PRACTICE_MESSAGES: Record<string, string[]> = {
     "새소리가 청아하네 🐦",
     "여기 자주 와야겠다!",
     "공기가 다르다, 진짜 🌿",
+    "어? 반딧불이다! ✨",
+    "반딧불이 반짝반짝~ 💫",
+    "와... 반딧불이 날아다녀 🌟",
   ],
   autumn: [
     "단풍이 진짜 예쁘다 🍁",
@@ -443,6 +446,23 @@ export class GameEngine {
           const dy = targetY - this.player.y;
           const maxStep = PLAYER_SPEED * 1.8 * (dt / 1000);
           this.player.y += Math.sign(dy) * Math.min(Math.abs(dy), maxStep);
+        }
+        // 산책 모드 달빛길: photoMode에서도 발자국 트레일 계속 업데이트
+        if (this.currentThemeId === 'moonlight') {
+          const dtSec = dt / 1000;
+          const scrollDelta = WATER_BASE_SPEED * this.practiceSpeedMult * dtSec;
+          this.snowTrailTimer += dtSec;
+          if (this.snowTrailTimer >= 0.18) {
+            this.snowTrailTimer = 0;
+            this.snowTrail.push({
+              x: this.player.x + this.player.width / 2,
+              absY: this.player.y + this.player.height,
+              yd: 0,
+              idx: this.snowTrail.length,
+            });
+          }
+          for (const p of this.snowTrail) p.yd += scrollDelta;
+          this.snowTrail = this.snowTrail.filter(p => p.yd < this.canvas.height + 20);
         }
       } else {
         // 일반 완주: 캐릭터 중앙으로 이동

@@ -143,9 +143,9 @@ function drawFlower(ctx: CanvasRenderingContext2D, cx: number, cy: number, color
   ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
 }
 
-// 🌲 숲 소나무 (사이드에만)
+// 🌲 숲 소나무 + 반딧불
 function renderTrees(rc: RenderCtx) {
-  const { ctx, pathLeft, pathWidth, height, scrollY } = rc;
+  const { ctx, width, pathLeft, pathWidth, height, scrollY, aliveTime } = rc;
   const rightEdge = pathLeft + pathWidth;
   const period = 90;
   const world = Math.floor(scrollY / period);
@@ -153,12 +153,51 @@ function renderTrees(rc: RenderCtx) {
   for (let i = 0; i <= Math.ceil((height + period * 2) / period); i++) {
     const slot = world + i;
     const y = (scrollY % period) - period + i * period;
-    // 좌측 2그루 (겹치지 않게 앞뒤 배치)
     drawPineTree(ctx, pathLeft - 14, y);
     drawPineTree(ctx, pathLeft - 26, y + period * 0.5 + (Math.abs(slot) % 2) * 8);
-    // 우측 2그루
     drawPineTree(ctx, rightEdge + 14, y + period * 0.25);
     drawPineTree(ctx, rightEdge + 26, y + period * 0.75);
+  }
+
+  // ── 반딧불 (좌우 사이드, 위아래 균등 분포) ──
+  const ffCount = 14; // 좌 14 + 우 14
+  const sectionH = height / ffCount;
+  for (let i = 0; i < ffCount * 2; i++) {
+    const s1 = i * 1471, s2 = i * 853;
+    const isLeft = i < ffCount;
+    const row    = i % ffCount;
+
+    // x: 각 사이드 범위 내 랜덤
+    const lRange = Math.max(10, pathLeft + 20);
+    const rRange = Math.max(10, width - rightEdge + 20);
+    const baseX  = isLeft
+      ? 2  + (s2 % lRange)
+      : rightEdge - 8 + (s2 % rRange);
+
+    // y: 섹션 균등 분할 + 섹션 내 랜덤 오프셋
+    const baseY = row * sectionH + (s1 % Math.max(1, sectionH - 10)) + 5;
+
+    const floatX = Math.sin(aliveTime * (0.35 + (s1 % 5) * 0.11) + i * 1.3) * 7;
+    const floatY = Math.sin(aliveTime * (0.28 + (s1 % 4) * 0.08) + i * 0.9) * 10;
+    const pulse  = 0.3 + Math.abs(Math.sin(aliveTime * (1.1 + (i % 6) * 0.17) + i * 0.7)) * 0.65;
+    const size   = 1.8 + (s1 % 3) * 0.9;
+
+    const fx = baseX + floatX;
+    const fy = baseY + floatY;
+
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.shadowColor = '#AAFF44';
+    ctx.shadowBlur  = size * 5 * pulse;
+    const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, size * 2.5);
+    grad.addColorStop(0,   'rgba(220,255,120,1)');
+    grad.addColorStop(0.4, 'rgba(150,255,60,0.7)');
+    grad.addColorStop(1,   'rgba(80,200,20,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(fx, fy, size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
