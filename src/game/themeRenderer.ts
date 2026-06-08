@@ -400,7 +400,7 @@ function renderSnow(rc: RenderCtx) {
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(230,242,255,1)';
+    ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.arc(baseX + drift, y, size, 0, Math.PI * 2);
     ctx.fill();
