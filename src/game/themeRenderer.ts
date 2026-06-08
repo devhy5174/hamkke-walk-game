@@ -548,6 +548,17 @@ function renderBamboo(rc: RenderCtx) {
     drawBambooStalk(ctx, rightEdge + 22 - sway2, y + period * 0.72, period);
   }
 
+  // 대나무 오버행 가지 (사이드에서 살짝 뻗어나옴)
+  const branchPeriod = 200;
+  const branchWorld = Math.floor(scrollY / branchPeriod);
+  for (let i = 0; i <= Math.ceil((height + branchPeriod * 2) / branchPeriod); i++) {
+    const slot = branchWorld + i;
+    const y = (scrollY % branchPeriod) - branchPeriod + i * branchPeriod;
+    const sway = Math.sin(aliveTime * 0.6 + slot * 0.9) * 3;
+    drawBambooOverhang(ctx, 0,     y,                       pathLeft,  sway,  true,  slot, aliveTime);
+    drawBambooOverhang(ctx, width, y + branchPeriod * 0.5,  rightEdge, sway,  false, slot + 2, aliveTime);
+  }
+
   // 사이드 잎 (위아래 흐름)
   const leafPeriod = 44;
   const leafWorld = Math.floor(scrollY / leafPeriod);
@@ -580,6 +591,69 @@ function renderBamboo(rc: RenderCtx) {
       const alpha = 0.55 + Math.abs(Math.sin(slot * 0.7 + j)) * 0.3;
       drawBambooLeaf(ctx, baseX + drift, y + j * (floatPeriod / 3), angle, alpha, 16, 5);
     }
+  }
+}
+
+function drawBambooOverhang(
+  ctx: CanvasRenderingContext2D,
+  edgeX: number,
+  baseY: number,
+  pathEdgeX: number,
+  sway: number,
+  isLeft: boolean,
+  slot: number,
+  aliveTime: number,
+) {
+  const dir = isLeft ? 1 : -1;
+  const w = 8;
+  const len = Math.abs(pathEdgeX - edgeX) + 10 + (Math.abs(slot) % 3) * 6;
+  const tipX = edgeX + (isLeft ? len : -len);
+  const tipY = baseY + sway;
+
+  ctx.save();
+  ctx.translate(edgeX, tipY);
+
+  // 대나무 통 본체
+  ctx.fillStyle = '#4A8A3A';
+  ctx.fillRect(isLeft ? 0 : -len, -w / 2, len, w);
+
+  // 마디
+  for (let k = 1; k <= 2; k++) {
+    const mx = isLeft ? len * 0.35 * k : -len + len * 0.35 * k;
+    ctx.fillStyle = '#3A7A2A';
+    ctx.fillRect(mx, -w / 2 - 1, 2.5, w + 2);
+  }
+
+  // 하이라이트
+  ctx.fillStyle = '#6AAA5A';
+  ctx.fillRect(isLeft ? 1 : -len + 1, -w / 2 + 1.5, len - 2, 1.8);
+
+  ctx.restore();
+
+  // ── 물방울 (대나무 끝에서 뚝뚝) ──
+  const dropSpeed  = 180;
+  const maxFall    = 90;
+  const dropCount  = 3;
+  for (let k = 0; k < dropCount; k++) {
+    const phase  = (k / dropCount);
+    const t      = ((aliveTime * 0.7 + phase + slot * 0.31) % 1); // 0→1 반복
+    const dropY  = tipY + w / 2 + t * maxFall;
+    const alpha  = t < 0.15 ? t / 0.15 : t > 0.75 ? (1 - t) / 0.25 : 1;
+    const radius = 2.8 * (1 - t * 0.5);
+
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.75;
+    // 물방울 본체 (타원)
+    ctx.fillStyle = 'rgba(100,190,220,1)';
+    ctx.beginPath();
+    ctx.ellipse(tipX, dropY, radius * 0.7, radius, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 하이라이트
+    ctx.fillStyle = 'rgba(200,240,255,0.8)';
+    ctx.beginPath();
+    ctx.ellipse(tipX - radius * 0.2, dropY - radius * 0.3, radius * 0.25, radius * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
