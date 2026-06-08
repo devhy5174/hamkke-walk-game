@@ -683,6 +683,18 @@ function drawBambooLeaf(ctx: CanvasRenderingContext2D, cx: number, cy: number, a
 function renderStars(rc: RenderCtx) {
   const { ctx, width, height, pathLeft, pathWidth, scrollY, aliveTime } = rc;
   const rightEdge = pathLeft + pathWidth;
+
+  // ── 달빛 나무 실루엣 (양 사이드) ──
+  const treePeriod = 200;
+  const treeWorld = Math.floor(scrollY / treePeriod);
+  for (let i = 0; i <= Math.ceil((height + treePeriod * 2) / treePeriod); i++) {
+    const slot = treeWorld + i;
+    const y = (scrollY % treePeriod) - treePeriod + i * treePeriod;
+    const sway = Math.sin(aliveTime * 0.5 + slot * 0.9) * 2.5;
+    drawMoonlightTree(ctx, 0,     y,                       pathLeft,  sway,  true,  slot, aliveTime);
+    drawMoonlightTree(ctx, width, y + treePeriod * 0.5,    rightEdge, sway,  false, slot + 3, aliveTime);
+  }
+
   const period = 60;
   const world = Math.floor(scrollY / period);
 
@@ -752,6 +764,30 @@ function renderStars(rc: RenderCtx) {
     ctx.restore();
   }
 
+  // ── 별·달 이모지 낙하 (위→아래, 갈수록 페이드아웃) ──
+  const emojis = ['⭐', '🌟', '✨', '🌙'];
+  for (let i = 0; i < 22; i++) {
+    const s1 = i * 1553, s2 = i * 877, s3 = i * 631;
+    const speed = 50 + (s1 % 8) * 14;
+    const baseX = 10 + (s2 % (width - 20));
+    const phase = s3 % height;
+    const fontSize = 10 + (s1 % 3) * 4; // 10~18px
+    const drift = Math.sin(aliveTime * 0.25 + i * 1.2) * 8;
+    const emoji = emojis[s1 % emojis.length];
+
+    const y = (aliveTime * speed + phase) % height;
+    // 위(0)에서 밝고 아래(height)로 갈수록 사라짐
+    const alpha = Math.max(0, 0.9 * (1 - y / height));
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `${fontSize}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, baseX + drift, y);
+    ctx.restore();
+  }
+
   // ── 산책 모드 황금 발자국 트레일 ──
   if (rc.snowTrail && rc.snowTrail.length > 0 && rc.goldenFootprintImg) {
     const img = rc.goldenFootprintImg;
@@ -776,6 +812,89 @@ function renderStars(rc: RenderCtx) {
       ctx.restore();
     }
   }
+}
+
+function drawMoonlightTree(
+  ctx: CanvasRenderingContext2D,
+  edgeX: number,
+  baseY: number,
+  pathEdgeX: number,
+  sway: number,
+  isLeft: boolean,
+  slot: number,
+  aliveTime: number,
+) {
+  const dir = isLeft ? 1 : -1;
+  const len = Math.abs(pathEdgeX - edgeX) + 14;
+
+  ctx.save();
+  ctx.translate(edgeX, baseY);
+
+  // 메인 줄기 — 짙은 남색 실루엣
+  ctx.strokeStyle = 'rgba(15,10,50,0.85)';
+  ctx.lineWidth   = 5;
+  ctx.lineCap     = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 28);
+  ctx.bezierCurveTo(
+    dir * len * 0.3, 12 + sway,
+    dir * len * 0.7, -8 + sway,
+    dir * len,       -28 + sway,
+  );
+  ctx.stroke();
+
+  // 서브 가지 1
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(20,12,60,0.8)';
+  ctx.beginPath();
+  ctx.moveTo(dir * len * 0.45, 4 + sway * 0.5);
+  ctx.bezierCurveTo(
+    dir * len * 0.55, -14 + sway,
+    dir * len * 0.65, -24 + sway,
+    dir * len * 0.68, -36 + sway,
+  );
+  ctx.stroke();
+
+  // 서브 가지 2
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(dir * len * 0.7, -8 + sway);
+  ctx.bezierCurveTo(
+    dir * len * 0.77, -3  + sway,
+    dir * len * 0.84,  5  + sway,
+    dir * len * 0.87,  13 + sway,
+  );
+  ctx.stroke();
+
+  // 황금 오브 (가지 끝에서 반짝)
+  const orbPositions = [
+    { x: dir * len,        y: -28 + sway, r: 4.5,  phase: 0 },
+    { x: dir * len * 0.68, y: -36 + sway, r: 3.5,  phase: 1.1 },
+    { x: dir * len * 0.87, y:  13 + sway, r: 3,    phase: 2.2 },
+    { x: dir * len * 0.55, y: -12 + sway, r: 2.5,  phase: 0.7 },
+    { x: dir * len * 0.82, y:  -4 + sway, r: 2,    phase: 1.8 },
+  ];
+
+  for (const orb of orbPositions) {
+    const pulse = 0.6 + Math.abs(Math.sin(aliveTime * 0.9 + orb.phase + slot * 0.5)) * 0.4;
+    ctx.save();
+    // 황금 글로우
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur  = 10 * pulse;
+    ctx.globalAlpha = pulse;
+    // 오브 본체
+    const grad = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.r);
+    grad.addColorStop(0,   'rgba(255,255,200,1)');
+    grad.addColorStop(0.4, 'rgba(255,210,50,0.9)');
+    grad.addColorStop(1,   'rgba(255,160,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, orb.r * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore();
 }
 
 function drawSparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, alpha: number) {

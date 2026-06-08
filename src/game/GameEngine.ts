@@ -425,9 +425,30 @@ export class GameEngine {
     this.prevTime = now;
     if (this.photoMode) {
       this.aliveTime += dt / 1000;
-      // 캐릭터 수평 중앙으로 부드럽게 이동
-      const centerX = this.canvas.width / 2 - this.player.width / 2;
-      this.player.x += (centerX - this.player.x) * 0.08;
+      if (this.isPracticeMode) {
+        // 산책 모드: photoMode에서도 자유 이동
+        const { width } = this.canvas;
+        const pathLeft = width * ROAD_L;
+        const pathRight = width * ROAD_R;
+        if (this.touchX !== null) {
+          const target = Math.max(pathLeft, Math.min(this.touchX - this.player.width / 2, pathRight - this.player.width));
+          const delta = target - this.player.x;
+          const maxStep = PLAYER_SPEED * 1.8 * this.practiceSpeedMult * (dt / 1000);
+          this.player.x += Math.sign(delta) * Math.min(Math.abs(delta), maxStep);
+        }
+        const yMin = this.canvas.height * 0.12;
+        const yMax = this.canvas.height * 0.80;
+        if (this.touchY !== null) {
+          const targetY = Math.max(yMin, Math.min(this.touchY - this.player.height / 2, yMax));
+          const dy = targetY - this.player.y;
+          const maxStep = PLAYER_SPEED * 1.8 * (dt / 1000);
+          this.player.y += Math.sign(dy) * Math.min(Math.abs(dy), maxStep);
+        }
+      } else {
+        // 일반 완주: 캐릭터 중앙으로 이동
+        const centerX = this.canvas.width / 2 - this.player.width / 2;
+        this.player.x += (centerX - this.player.x) * 0.08;
+      }
       this.render();
     } else {
       this.update(dt / 1000);
@@ -436,9 +457,11 @@ export class GameEngine {
     this.rafId = requestAnimationFrame(this.tick);
   };
 
+  practiceSpeedMult = 1.0; // 산책 모드 속도 (외부에서 조절 가능)
+
   private get speedMult(): number {
+    if (this.isPracticeMode) return this.practiceSpeedMult;
     if (this.currentThemeId === "moonlight") return MOONLIGHT_SPEED;
-    if (this.isPracticeMode) return 1.2;
     return Math.min(1 + this.aliveTime * SPEED_RAMP, SPEED_CAP);
   }
 
