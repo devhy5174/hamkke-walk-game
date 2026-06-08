@@ -37,6 +37,9 @@ function App() {
     dodgerMsg,
     startGame,
     isPaused,
+    isPractice,
+    startPractice,
+    exitPractice,
     pauseGame: _pauseGame,
     resumeGame,
     showResult,
@@ -467,7 +470,13 @@ function App() {
       )}
 
       {showCollection && (
-        <ThemeCollectionModal onClose={() => setShowCollection(false)} />
+        <ThemeCollectionModal
+          onClose={() => setShowCollection(false)}
+          onPractice={(theme) => {
+            setShowCollection(false);
+            startPractice(theme, selectedChar.src);
+          }}
+        />
       )}
       {showRecords && <RecordsModal onClose={() => setShowRecords(false)} />}
       {showRanking && (
@@ -482,6 +491,54 @@ function App() {
       )}
       {showRankingViewOnly && (
         <RankingModal viewOnly onClose={() => setShowRankingViewOnly(false)} />
+      )}
+
+      {/* 체험 모드 HUD */}
+      {isStarted && isPractice && (
+        <>
+          <div style={{
+            position: "absolute",
+            top: 88,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "linear-gradient(135deg, rgba(102,126,234,0.92), rgba(118,75,162,0.92))",
+            backdropFilter: "blur(8px)",
+            borderRadius: 50,
+            padding: "6px 16px",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#fff",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            zIndex: 20,
+            boxShadow: "0 2px 12px rgba(102,126,234,0.4)",
+            letterSpacing: 0.3,
+          }}>
+            🎮 체험 모드 · 기록 저장 안 됨
+          </div>
+          <button
+            onClick={exitPractice}
+            style={{
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              height: 44,
+              padding: "0 18px",
+              borderRadius: 50,
+              background: "rgba(255,255,255,0.85)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#666",
+              cursor: "pointer",
+              zIndex: 50,
+            }}
+          >
+            나가기
+          </button>
+        </>
       )}
 
       {/* 음소거 버튼 */}

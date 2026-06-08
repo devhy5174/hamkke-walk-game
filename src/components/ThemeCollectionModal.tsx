@@ -182,7 +182,15 @@ function ThemePreviewCanvas({ theme }: { theme: GameTheme }) {
 
 // ── 테마 상세 팝업 ───────────────────────────────────────────────────────────
 
-function ThemeDetailPopup({ theme, index, onClose }: { theme: GameTheme; index: number; onClose: () => void }) {
+function ThemeDetailPopup({
+  theme, index, onClose, onPractice, allUnlocked,
+}: {
+  theme: GameTheme;
+  index: number;
+  onClose: () => void;
+  onPractice?: (theme: GameTheme) => void;
+  allUnlocked: boolean;
+}) {
   return (
     <div style={detailBackdrop} onClick={onClose}>
       <div style={detailCard} onClick={e => e.stopPropagation()}>
@@ -197,6 +205,11 @@ function ThemeDetailPopup({ theme, index, onClose }: { theme: GameTheme; index: 
           </div>
         </div>
         <p style={detailDesc}>{DESCRIPTIONS[theme.id]}</p>
+        {allUnlocked && onPractice && (
+          <button style={practiceBtn} onClick={() => onPractice(theme)}>
+            🎮 체험하기
+          </button>
+        )}
         <button style={closeBtn} onClick={onClose}>닫기</button>
       </div>
     </div>
@@ -205,12 +218,22 @@ function ThemeDetailPopup({ theme, index, onClose }: { theme: GameTheme; index: 
 
 // ── 메인 도감 모달 ───────────────────────────────────────────────────────────
 
-interface Props { onClose: () => void; }
+interface Props {
+  onClose: () => void;
+  onPractice?: (theme: GameTheme) => void;
+}
 
-export function ThemeCollectionModal({ onClose }: Props) {
+export function ThemeCollectionModal({ onClose, onPractice }: Props) {
   const unlocked = getUnlockedThemes();
   const count = unlocked.length;
+  const allUnlocked = count >= THEMES.length;
   const [selected, setSelected] = useState<{ theme: GameTheme; index: number } | null>(null);
+
+  const handlePractice = (theme: GameTheme) => {
+    setSelected(null);
+    onClose();
+    onPractice?.(theme);
+  };
 
   return (
     <>
@@ -260,6 +283,8 @@ export function ThemeCollectionModal({ onClose }: Props) {
           theme={selected.theme}
           index={selected.index}
           onClose={() => setSelected(null)}
+          onPractice={handlePractice}
+          allUnlocked={allUnlocked}
         />
       )}
     </>
@@ -325,6 +350,14 @@ const gridName = (unlocked: boolean, bonus = false): CSSProperties => ({
   color: bonus ? '#B8860B' : unlocked ? '#2D7D52' : '#B0B0B0',
 });
 const gridRange: CSSProperties = { fontSize: 9, color: '#A0B4AC', marginTop: 2 };
+
+const practiceBtn: CSSProperties = {
+  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+  color: '#fff', border: 'none',
+  borderRadius: 50, padding: '12px 0', fontSize: '0.95rem', fontWeight: 700,
+  cursor: 'pointer', width: '100%', marginBottom: 8,
+  boxShadow: '0 4px 14px rgba(102,126,234,0.4)',
+};
 
 const closeBtn: CSSProperties = {
   background: '#3DAE79', color: '#fff', border: 'none',

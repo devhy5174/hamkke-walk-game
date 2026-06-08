@@ -267,7 +267,7 @@ export class GameEngine {
     this.onThemeChange = onThemeChange;
   }
 
-  start(_startDistance = 0) {
+  start(startDistance = 0) {
     this.stop();
     const { width, height } = this.canvas;
     this.player = {
@@ -294,10 +294,13 @@ export class GameEngine {
     this.obsTimer = OBSTACLE_SPAWN_MS * 0.55;
     this.aliveTime = 0;
     this.scrollY = 0;
-    this.distanceMeters = 0;
-    this.nextDistanceScore = 10;
+    this.distanceMeters = startDistance;
+    this.nextDistanceScore = Math.floor(startDistance / 10) * 10 + 10;
     this.reachedMilestones = new Set<number>();
-    this.currentThemeId = THEMES[0].id;
+    this.currentThemeId = getThemeByDistance(startDistance).id;
+    this.moonlightTimeLeft = -1;
+    this.finishSequence = false;
+    this.finishTimer = 0;
     this.running = true;
     this.prevTime = 0;
     this.rafId = requestAnimationFrame(this.tick);
@@ -484,7 +487,7 @@ export class GameEngine {
         this.moonlightMsgTimer = 8 + Math.random() * 4; // 8~12초 간격
       }
 
-      if (this.moonlightTimeLeft <= 0) {
+      if (this.moonlightTimeLeft <= 0 && !this.isPracticeMode) {
         this.finishSequence = true;
         this.finishTimer = 0;
         this.footprints = [];
@@ -627,6 +630,7 @@ export class GameEngine {
 
     if (
       !this.isPowerMode &&
+      !this.isPracticeMode &&
       this.obstacles.some((obs) => hitObstacle(player, obs))
     ) {
       this.running = false;

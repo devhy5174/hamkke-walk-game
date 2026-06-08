@@ -11,6 +11,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const engineRef = useRef<GameEngine | null>(null);
   const scoreRef = useRef(0);
   const distanceRef = useRef(0);
+  const isPracticeRef = useRef(false);
   const milestoneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const themeToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -40,6 +41,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     null,
   );
   const [isPaused, setIsPaused] = useState(false);
+  const [isPractice, setIsPractice] = useState(false);
   const [dodgerMsg, setDodgerMsg] = useState<string | null>(null);
   const dodgerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [photoMsg, setPhotoMsg] = useState<string | null>(null);
@@ -80,6 +82,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   }, []);
 
   const handleGameOver = useCallback(() => {
+    if (isPracticeRef.current) return;
     const finalScore = scoreRef.current;
     const finalDist = distanceRef.current;
     setBestScore((prev) => Math.max(prev, finalScore));
@@ -140,7 +143,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const handleThemeChange = useCallback(
     (theme: GameTheme) => {
       setCurrentTheme(theme);
-      unlockTheme(theme.id);
+      if (!isPracticeRef.current) unlockTheme(theme.id);
       if (theme.id === "moonlight") {
         audioManager.switchToMoonlightBGM();
         setTimeout(
@@ -217,6 +220,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       setShowCompletionOverlay(false);
       setPhotoMsg(null);
       setMoonlightTimeLeft(0);
+      isPracticeRef.current = false;
+      setIsPractice(false);
       setIsPaused(false);
       setIsStarted(true);
       engineRef.current.start();
@@ -246,6 +251,68 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     ],
   );
 
+  const startPractice = useCallback(
+    (theme: GameTheme, charSrc?: string) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      engineRef.current?.stop();
+      engineRef.current = new GameEngine(
+        canvas,
+        handleUpdate,
+        handleGameOver,
+        handleMilestone,
+        handleThemeChange,
+      );
+      if (charSrc) engineRef.current.setCharacter(charSrc);
+      engineRef.current.isPracticeMode = true;
+      engineRef.current.setDodgerCallback(handleDodger);
+      engineRef.current.setPowerMsgCallback(handleDodger);
+
+      scoreRef.current = 0;
+      setScore(0);
+      setGaugeCount(0);
+      setDistanceMeters(theme.minDistance);
+      setIsPowerMode(false);
+      setPowerTimeLeft(0);
+      setGameEnded(false);
+      setIsSlowMode(false);
+      setSlowTimeLeft(0);
+      setGameOver(false);
+      setIsComplete(false);
+      setIsPhotoMode(false);
+      setShowCompletionOverlay(false);
+      setPhotoMsg(null);
+      setMoonlightTimeLeft(0);
+      setActiveMilestone(null);
+      setActiveThemeToast(null);
+      setCurrentTheme(theme);
+      isPracticeRef.current = true;
+      setIsPractice(true);
+      setIsPaused(false);
+      setIsStarted(true);
+
+      engineRef.current.start(theme.minDistance);
+
+      if (theme.id === 'moonlight') {
+        audioManager.switchToMoonlightBGM();
+      } else {
+        audioManager.playBGM();
+      }
+    },
+    [canvasRef, handleUpdate, handleGameOver, handleMilestone, handleThemeChange, handleDodger],
+  );
+
+  const exitPractice = useCallback(() => {
+    engineRef.current?.stop();
+    audioManager.stopBGM();
+    isPracticeRef.current = false;
+    setIsPractice(false);
+    setIsStarted(false);
+    setGameEnded(false);
+    setGameOver(false);
+  }, []);
+
   return {
     score,
     gaugeCount,
@@ -259,6 +326,9 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     gameOver,
     isStarted,
     isPaused,
+    isPractice,
+    startPractice,
+    exitPractice,
     currentTheme,
     activeMilestone,
     activeThemeToast,
