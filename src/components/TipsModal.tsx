@@ -121,7 +121,7 @@ export function TipsModal({ onClose }: Props) {
             <Row
               emoji="⏱️"
               label="시계 — 6초 슬로우"
-              desc="6초간 속도가 절반으로 줄어요. 잠깐 숨 돌리기 좋아요."
+              desc="6초간 속도가 크게 줄어요. 빠른 구간에서 숨 돌리기 좋아요."
             />
           </Section>
 
@@ -145,7 +145,7 @@ export function TipsModal({ onClose }: Props) {
                 🛡️ <span>5초간 장애물 무적</span>
               </div>
               <div style={powerRow}>
-                💨 <span>이동 속도 1.7배</span>
+                💨 <span>이동 속도 대폭 증가</span>
               </div>
               <div style={powerRow}>
                 ✨ <span>점수 2배 획득</span>
