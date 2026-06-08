@@ -270,15 +270,21 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
                 <div
                   key={theme.id}
                   style={isUnlocked ? (isBonus ? gridItemBonus : gridItemUnlocked) : (isBonus ? gridItemBonusLocked : gridItemLocked)}
+                  className={isUnlocked && isBonus ? 'moonlight-unlocked-card' : ''}
                   onClick={isUnlocked ? () => setSelected({ theme, index: i }) : undefined}
                 >
-                  <span style={{ fontSize: 28 }}>{isUnlocked ? theme.emoji : isBonus ? '✨' : '🔒'}</span>
+                  {isUnlocked && isBonus ? (
+                    <span className="moon-emoji" style={{ fontSize: 28 }}>{theme.emoji}</span>
+                  ) : (
+                    <span style={{ fontSize: 28 }}>{isUnlocked ? theme.emoji : isBonus ? '✨' : '🔒'}</span>
+                  )}
                   <div style={gridName(isUnlocked, isBonus)}>
                     {isUnlocked ? theme.name : isBonus ? '보너스 구간' : '미방문'}
                   </div>
                   <div style={{ ...gridRange, color: isBonus && !isUnlocked ? '#C8A000' : undefined }}>
                     {isUnlocked ? rangeText(i) : `${theme.minDistance}m~`}
                   </div>
+                  {isUnlocked && isBonus && <span className="sparkle-icon">✨</span>}
                 </div>
               );
             })}
@@ -370,7 +376,7 @@ const gridItemLocked: CSSProperties = {
   opacity: 0.6, cursor: 'default',
 };
 const gridItemBonus: CSSProperties = {
-  ...baseGridItem, background: '#FFFBEA', border: '1.5px solid #FFD700',
+  ...baseGridItem, background: '#FFFBEA', border: '1.5px solid #FFD700', position: 'relative',
 };
 const gridItemBonusLocked: CSSProperties = {
   ...baseGridItem, background: '#FFFBEA', border: '1.5px dashed #FFD700',

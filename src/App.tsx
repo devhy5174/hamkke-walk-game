@@ -196,11 +196,10 @@ function App() {
         </div>
       )}
 
-      {/* 달빛길 포토모드 — 탭해서 결과 보기 */}
+      {/* 달빛길 포토모드 — 체험: 나가기 / 일반: 탭해서 결과 보기 */}
       {isPhotoMode && !gameEnded && (
-        <div
-          onClick={confirmComplete}
-          style={{
+        isPractice ? (
+          <div style={{
             position: "absolute",
             bottom: 40,
             left: 0,
@@ -209,22 +208,52 @@ function App() {
             justifyContent: "center",
             zIndex: 30,
             pointerEvents: "auto",
-          }}
-        >
+          }}>
+            <button
+              onClick={() => { setShowPracticeExit(false); exitPractice(); setShowCollection(true); }}
+              style={{
+                background: "rgba(255,215,0,0.18)",
+                border: "1px solid rgba(255,215,0,0.5)",
+                borderRadius: 50,
+                padding: "11px 32px",
+                color: "rgba(255,215,0,0.95)",
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              🗺️ 도감으로 돌아가기
+            </button>
+          </div>
+        ) : (
           <div
+            onClick={confirmComplete}
             style={{
-              background: "rgba(255,215,0,0.15)",
-              border: "1px solid rgba(255,215,0,0.4)",
-              borderRadius: 50,
-              padding: "10px 28px",
-              color: "rgba(255,215,0,0.9)",
-              fontSize: "0.85rem",
-              fontWeight: 700,
+              position: "absolute",
+              bottom: 40,
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+              zIndex: 30,
+              pointerEvents: "auto",
             }}
           >
-            탭해서 완주 결과 보기 ✨
+            <div
+              style={{
+                background: "rgba(255,215,0,0.15)",
+                border: "1px solid rgba(255,215,0,0.4)",
+                borderRadius: 50,
+                padding: "10px 28px",
+                color: "rgba(255,215,0,0.9)",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+              }}
+            >
+              탭해서 완주 결과 보기 ✨
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* 달빛길 완주 오버레이 */}

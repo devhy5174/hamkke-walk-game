@@ -501,7 +501,7 @@ export class GameEngine {
         this.moonlightMsgTimer = 8 + Math.random() * 4; // 8~12초 간격
       }
 
-      if (this.moonlightTimeLeft <= 0 && !this.isPracticeMode) {
+      if (this.moonlightTimeLeft <= 0) {
         this.finishSequence = true;
         this.finishTimer = 0;
         this.footprints = [];

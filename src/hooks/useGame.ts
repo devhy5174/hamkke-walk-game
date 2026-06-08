@@ -268,6 +268,12 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       engineRef.current.isPracticeMode = true;
       engineRef.current.setDodgerCallback(handleDodger);
       engineRef.current.setPowerMsgCallback(handleDodger);
+      if (theme.id === 'moonlight') {
+        engineRef.current.setFinishReadyCallback(() => {
+          setIsPhotoMode(true);
+          setTimeout(() => setPhotoMsg("달빛길 체험 완주! 🌙✨\n나가기를 눌러 도감으로 돌아가요"), 1000);
+        });
+      }
 
       scoreRef.current = 0;
       setScore(0);
