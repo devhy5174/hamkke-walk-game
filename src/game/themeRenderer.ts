@@ -9,6 +9,8 @@ export interface RenderCtx {
   isPowerMode: boolean;
   scrollY: number;
   aliveTime: number;
+  playerCx?: number; // 캐릭터 중심 x (눈길 자국용)
+  playerY?: number;  // 캐릭터 발 y
 }
 
 // ── 배경 (잔디 + 길 + 발자국 패턴 + 풀잎) ───────────────────────────────
@@ -204,57 +206,184 @@ function drawLeaf(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: 
   ctx.restore();
 }
 
-// 🌸 벚꽃 꽃잎 (사이드 잔디 + 길 가장자리 — 부드럽게)
+// 🌸 벚꽃 (가지 + 꽃 + 꽃잎 낙화)
 function renderPetals(rc: RenderCtx) {
   const { ctx, pathLeft, pathWidth, height, width, scrollY, aliveTime } = rc;
   const rightEdge = pathLeft + pathWidth;
-  const period = 44;
-  // 꽃잎은 잔디와 길 가장자리에만 (pathLeft 안쪽 20px, rightEdge 바깥 20px)
-  const lZone = pathLeft + 20;
-  const rZoneStart = rightEdge - 20;
-  const world = Math.floor(scrollY / period);
 
+  // ── 벚꽃 가지 ──
+  const branchPeriod = 180;
+  const branchWorld = Math.floor(scrollY / branchPeriod);
+  for (let i = 0; i <= Math.ceil((height + branchPeriod * 2) / branchPeriod); i++) {
+    const slot = branchWorld + i;
+    const y = (scrollY % branchPeriod) - branchPeriod + i * branchPeriod;
+    const sway = Math.sin(aliveTime * 0.4 + slot * 0.8) * 2.5;
+    drawCherryBranch(ctx, 0,     y,                       pathLeft,  sway,  true,  slot);
+    drawCherryBranch(ctx, width, y + branchPeriod * 0.5,  rightEdge, sway,  false, slot + 3);
+  }
+
+  // ── 꽃잎 낙화 (좌우 사이드 + 길 안쪽까지 날림) ──
+  const period = 38;
+  const world = Math.floor(scrollY / period);
   for (let i = 0; i <= Math.ceil((height + period * 2) / period); i++) {
     const slot = world + i;
     const y = (scrollY % period) - period + i * period;
-
-    for (let j = 0; j < 3; j++) {
-      // 좌측 꽃잎 (0 ~ pathLeft+20)
-      const lx = stableX(slot, j * 2, 2, lZone - 4);
-      // 우측 꽃잎 (rightEdge-20 ~ width)
-      const rx = rZoneStart + stableX(slot, j * 2 + 1, 0, width - rZoneStart - 4);
-      const drift = Math.sin(aliveTime * 0.6 + slot * 0.5 + j) * 3; // 느린 표류
-      const alpha = 0.5 + Math.sin(slot * 0.8 + j) * 0.2;
+    for (let j = 0; j < 4; j++) {
+      // 좌측: 사이드 ~ 길 안쪽 40px
+      const lx = stableX(slot, j * 2,     2, pathLeft + 40);
+      // 우측: 길 안쪽 40px 왼쪽부터 ~ 오른쪽 끝
+      const rx = rightEdge - 40 + stableX(slot, j * 2 + 1, 0, width - (rightEdge - 40) - 4);
+      const drift  = Math.sin(aliveTime * 0.55 + slot * 0.5 + j) * 5;
+      const spin   = Math.sin(slot * 0.9 + j) * 0.5;
+      const alpha  = 0.45 + Math.abs(Math.sin(slot * 0.7 + j)) * 0.35;
+      const colors = ['rgba(255,182,200,', 'rgba(255,210,220,', 'rgba(255,230,235,'];
+      const col    = colors[(Math.abs(slot) + j) % colors.length];
 
       ctx.save();
-      ctx.translate(lx + drift, y + j * (period / 3));
-      ctx.rotate(Math.sin(slot * 0.9 + j) * 0.4);
-      ctx.fillStyle = `rgba(255,182,200,${alpha})`;
+      ctx.translate(lx + drift, y + j * (period / 4));
+      ctx.rotate(spin);
+      ctx.fillStyle = `${col}${alpha})`;
       ctx.beginPath(); ctx.ellipse(0, 0, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
       ctx.save();
-      ctx.translate(rx - drift, y + j * (period / 3) + 12);
-      ctx.rotate(-Math.sin(slot * 0.9 + j) * 0.4);
-      ctx.fillStyle = `rgba(255,200,215,${alpha})`;
+      ctx.translate(rx - drift, y + j * (period / 4) + period * 0.5);
+      ctx.rotate(-spin);
+      ctx.fillStyle = `${col}${alpha})`;
       ctx.beginPath(); ctx.ellipse(0, 0, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
   }
 }
 
-// ❄️ 눈송이 (전체 너비 — 자연스럽게 내리는 느낌)
+function drawCherryBranch(
+  ctx: CanvasRenderingContext2D,
+  edgeX: number, // 화면 가장자리 x (0 = 좌, width = 우)
+  baseY: number,
+  pathEdgeX: number, // pathLeft 또는 rightEdge
+  sway: number,
+  isLeft: boolean,
+  slot: number,
+) {
+  const dir  = isLeft ? 1 : -1; // 가지가 뻗는 방향
+  const branchLen = Math.abs(pathEdgeX - edgeX) + 12; // 길 안쪽 살짝만 오버행
+
+  ctx.save();
+  ctx.translate(edgeX, baseY);
+
+  // 메인 줄기
+  ctx.strokeStyle = '#7B4A2A';
+  ctx.lineWidth   = 5;
+  ctx.lineCap     = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 30);
+  ctx.bezierCurveTo(
+    dir * branchLen * 0.3, 15 + sway,
+    dir * branchLen * 0.7, -10 + sway,
+    dir * branchLen,       -30 + sway,
+  );
+  ctx.stroke();
+
+  // 서브 가지 1
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#8B5A3A';
+  ctx.beginPath();
+  ctx.moveTo(dir * branchLen * 0.45, 5 + sway * 0.5);
+  ctx.bezierCurveTo(
+    dir * branchLen * 0.55, -15 + sway,
+    dir * branchLen * 0.65, -25 + sway,
+    dir * branchLen * 0.7,  -38 + sway,
+  );
+  ctx.stroke();
+
+  // 서브 가지 2
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(dir * branchLen * 0.7, -10 + sway);
+  ctx.bezierCurveTo(
+    dir * branchLen * 0.78, -5  + sway,
+    dir * branchLen * 0.85,  5  + sway,
+    dir * branchLen * 0.88,  14 + sway,
+  );
+  ctx.stroke();
+
+  // 꽃 클러스터
+  const flowerPositions = [
+    { t: 0.55, x: dir * branchLen * 0.55, y: -10 + sway, count: 3 },
+    { t: 0.85, x: dir * branchLen,        y: -30 + sway, count: 5 },
+    { t: 0.72, x: dir * branchLen * 0.7,  y: -38 + sway, count: 4 },
+    { t: 0.88, x: dir * branchLen * 0.88, y: 14 + sway,  count: 3 },
+  ];
+
+  for (const fp of flowerPositions) {
+    const spread = 10 + Math.abs(Math.sin(slot * 1.3 + fp.t * 5)) * 6;
+    for (let k = 0; k < fp.count; k++) {
+      const angle  = (k / fp.count) * Math.PI * 2;
+      const radius = spread * 0.55;
+      const fx     = fp.x + Math.cos(angle) * radius;
+      const fy     = fp.y + Math.sin(angle) * radius * 0.7;
+      drawCherryFlower(ctx, fx, fy, slot + k);
+    }
+    drawCherryFlower(ctx, fp.x, fp.y, slot); // 중심 꽃
+  }
+
+  ctx.restore();
+}
+
+function drawCherryFlower(ctx: CanvasRenderingContext2D, cx: number, cy: number, seed: number) {
+  const petalCols = ['#FFB7C5', '#FFCCD5', '#FFE4EC', '#FFA0B8'];
+  ctx.fillStyle = petalCols[Math.abs(seed) % petalCols.length];
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.ellipse(
+      cx + Math.cos(a) * 3.5,
+      cy + Math.sin(a) * 3.5,
+      3.2, 2, a, 0, Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  ctx.fillStyle = '#FFE566';
+  ctx.beginPath(); ctx.arc(cx, cy, 1.6, 0, Math.PI * 2); ctx.fill();
+}
+
+// ❄️ 눈길 (눈 자국 선 + 눈송이)
 function renderSnow(rc: RenderCtx) {
-  const { ctx, width, height, scrollY, aliveTime } = rc;
+  const { ctx, width, height, scrollY, aliveTime, playerCx, playerY } = rc;
+
+  // ── 캐릭터 뒤 눈 자국 선 ──
+  if (playerCx !== undefined && playerY !== undefined) {
+    const trailGrad = ctx.createLinearGradient(0, 0, 0, playerY);
+    trailGrad.addColorStop(0,   'rgba(160,185,210,0)');
+    trailGrad.addColorStop(0.6, 'rgba(160,185,210,0.18)');
+    trailGrad.addColorStop(1,   'rgba(140,170,200,0.45)');
+
+    // 좌측 자국
+    ctx.save();
+    ctx.strokeStyle = trailGrad;
+    ctx.lineWidth   = 2.5;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.moveTo(playerCx - 7, 0);
+    ctx.lineTo(playerCx - 7, playerY);
+    ctx.stroke();
+    // 우측 자국
+    ctx.beginPath();
+    ctx.moveTo(playerCx + 7, 0);
+    ctx.lineTo(playerCx + 7, playerY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── 눈송이 낙하 ──
   const period = 52;
   const world = Math.floor(scrollY / period);
-
   for (let i = 0; i <= Math.ceil((height + period * 2) / period); i++) {
     const slot = world + i;
     const y = (scrollY % period) - period + i * period;
     for (let j = 0; j < 4; j++) {
       const x = stableX(slot, j * 2, 8, width - 16);
-      const drift = Math.sin(aliveTime * 0.5 + slot * 0.4 + j) * 4; // 느린 좌우 흔들림
+      const drift = Math.sin(aliveTime * 0.5 + slot * 0.4 + j) * 4;
       const size = 5 + (Math.abs(slot + j) % 3) * 2;
       drawSnowflake(ctx, x + drift, y + j * (period / 4), size);
     }

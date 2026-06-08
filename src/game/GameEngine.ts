@@ -702,6 +702,8 @@ export class GameEngine {
       isPowerMode: this.isPowerMode,
       scrollY: this.scrollY,
       aliveTime: this.aliveTime,
+      playerCx: this.player ? this.player.x + this.player.width / 2 : undefined,
+      playerY: this.player ? this.player.y + this.player.height : undefined,
     };
 
     // ── 배경 + 장식 (테마별 렌더링) ──
