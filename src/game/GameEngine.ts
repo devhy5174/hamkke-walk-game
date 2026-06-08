@@ -171,6 +171,8 @@ export class GameEngine {
   private isSlowMode = false;
   private slowTimeLeft = 0;
   private slowEaseTimer = 0; // 시계 종료 후 속도 페이드인 카운트다운
+  private snowTrail: Array<{ x: number; yd: number }> = [];
+  private snowTrailTimer = 0;
 
   private running = false;
   private paused = false;
@@ -289,6 +291,8 @@ export class GameEngine {
     this.isSlowMode = false;
     this.slowTimeLeft = 0;
     this.slowEaseTimer = 0;
+    this.snowTrail = [];
+    this.snowTrailTimer = 0;
     this.footprintTimer = 0;
     this.waterTimer = 0;
     this.clockTimer = 0;
@@ -442,7 +446,19 @@ export class GameEngine {
     }
 
     // 배경 스크롤
-    this.scrollY = (this.scrollY + WATER_BASE_SPEED * sm * boost * dtSec) % 60;
+    const scrollDelta = WATER_BASE_SPEED * sm * boost * dtSec;
+    this.scrollY = (this.scrollY + scrollDelta) % 60;
+
+    // 눈길 자국 트레일 포인트 수집
+    if (this.currentThemeId === 'snow' && this.player) {
+      this.snowTrailTimer += dtSec;
+      if (this.snowTrailTimer >= 0.04) {
+        this.snowTrailTimer = 0;
+        this.snowTrail.push({ x: this.player.x + this.player.width / 2, yd: 0 });
+      }
+      for (const p of this.snowTrail) p.yd += scrollDelta;
+      this.snowTrail = this.snowTrail.filter(p => p.yd < this.canvas.height + 20);
+    }
 
     // 거리 증가 + 거리 기반 점수
     const prevFloor = Math.floor(this.distanceMeters);
@@ -704,6 +720,7 @@ export class GameEngine {
       aliveTime: this.aliveTime,
       playerCx: this.player ? this.player.x + this.player.width / 2 : undefined,
       playerY: this.player ? this.player.y + this.player.height : undefined,
+      snowTrail: this.currentThemeId === 'snow' ? this.snowTrail : undefined,
     };
 
     // ── 배경 + 장식 (테마별 렌더링) ──

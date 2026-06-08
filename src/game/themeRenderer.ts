@@ -9,8 +9,9 @@ export interface RenderCtx {
   isPowerMode: boolean;
   scrollY: number;
   aliveTime: number;
-  playerCx?: number; // 캐릭터 중심 x (눈길 자국용)
-  playerY?: number;  // 캐릭터 발 y
+  playerCx?: number;
+  playerY?: number;
+  snowTrail?: Array<{ x: number; yd: number }>;
 }
 
 // ── 배경 (잔디 + 길 + 발자국 패턴 + 풀잎) ───────────────────────────────
@@ -351,26 +352,26 @@ function drawCherryFlower(ctx: CanvasRenderingContext2D, cx: number, cy: number,
 function renderSnow(rc: RenderCtx) {
   const { ctx, width, height, scrollY, aliveTime, playerCx, playerY } = rc;
 
-  // ── 캐릭터 뒤 눈 자국 선 (캐릭터 발 아래 → 화면 하단으로 사라짐) ──
-  if (playerCx !== undefined && playerY !== undefined) {
-    const trailGrad = ctx.createLinearGradient(0, playerY, 0, height);
-    trailGrad.addColorStop(0,   'rgba(140,170,200,0.5)');
-    trailGrad.addColorStop(0.5, 'rgba(160,185,210,0.2)');
-    trailGrad.addColorStop(1,   'rgba(160,185,210,0)');
+  // ── 캐릭터 이동 경로 눈 자국 곡선 ──
+  if (playerCx !== undefined && playerY !== undefined && rc.snowTrail && rc.snowTrail.length > 1) {
+    const trail = rc.snowTrail;
+    const trailGrad = ctx.createLinearGradient(0, playerY, 0, playerY + height);
+    trailGrad.addColorStop(0,   'rgba(130,165,200,0.6)');
+    trailGrad.addColorStop(0.5, 'rgba(150,180,210,0.25)');
+    trailGrad.addColorStop(1,   'rgba(150,180,210,0)');
 
     ctx.save();
     ctx.strokeStyle = trailGrad;
-    ctx.lineWidth   = 2.5;
+    ctx.lineWidth   = 3;
     ctx.lineCap     = 'round';
-    // 좌측 자국
+    ctx.lineJoin    = 'round';
+
+    // 최신 포인트(작은 yd)부터 오래된 포인트(큰 yd) 순으로 그리기
     ctx.beginPath();
-    ctx.moveTo(playerCx - 7, playerY);
-    ctx.lineTo(playerCx - 7, height);
-    ctx.stroke();
-    // 우측 자국
-    ctx.beginPath();
-    ctx.moveTo(playerCx + 7, playerY);
-    ctx.lineTo(playerCx + 7, height);
+    ctx.moveTo(playerCx, playerY);
+    for (let i = trail.length - 1; i >= 0; i--) {
+      ctx.lineTo(trail[i].x, playerY + trail[i].yd);
+    }
     ctx.stroke();
     ctx.restore();
   }
