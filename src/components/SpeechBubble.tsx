@@ -63,7 +63,11 @@ export function SpeechBubble({ message, engineRef, canvasRef, multiline, persist
         bottom: pos.bottom,
         animation: persistent ? 'bubbleFadeIn 0.5s ease forwards' : undefined,
         cursor: editable ? 'pointer' : undefined,
+        pointerEvents: editable ? 'auto' : undefined,
       }}
+      onTouchStart={editable ? e => e.stopPropagation() : undefined}
+      onTouchMove={editable ? e => e.stopPropagation() : undefined}
+      onTouchEnd={editable ? e => e.stopPropagation() : undefined}
     >
       {isEditing ? (
         <div className="speech-bubble-inner" style={{ padding: '6px 10px' }}>
