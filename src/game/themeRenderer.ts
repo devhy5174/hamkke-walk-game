@@ -351,26 +351,26 @@ function drawCherryFlower(ctx: CanvasRenderingContext2D, cx: number, cy: number,
 function renderSnow(rc: RenderCtx) {
   const { ctx, width, height, scrollY, aliveTime, playerCx, playerY } = rc;
 
-  // ── 캐릭터 뒤 눈 자국 선 ──
+  // ── 캐릭터 뒤 눈 자국 선 (캐릭터 발 아래 → 화면 하단으로 사라짐) ──
   if (playerCx !== undefined && playerY !== undefined) {
-    const trailGrad = ctx.createLinearGradient(0, 0, 0, playerY);
-    trailGrad.addColorStop(0,   'rgba(160,185,210,0)');
-    trailGrad.addColorStop(0.6, 'rgba(160,185,210,0.18)');
-    trailGrad.addColorStop(1,   'rgba(140,170,200,0.45)');
+    const trailGrad = ctx.createLinearGradient(0, playerY, 0, height);
+    trailGrad.addColorStop(0,   'rgba(140,170,200,0.5)');
+    trailGrad.addColorStop(0.5, 'rgba(160,185,210,0.2)');
+    trailGrad.addColorStop(1,   'rgba(160,185,210,0)');
 
-    // 좌측 자국
     ctx.save();
     ctx.strokeStyle = trailGrad;
     ctx.lineWidth   = 2.5;
     ctx.lineCap     = 'round';
+    // 좌측 자국
     ctx.beginPath();
-    ctx.moveTo(playerCx - 7, 0);
-    ctx.lineTo(playerCx - 7, playerY);
+    ctx.moveTo(playerCx - 7, playerY);
+    ctx.lineTo(playerCx - 7, height);
     ctx.stroke();
     // 우측 자국
     ctx.beginPath();
-    ctx.moveTo(playerCx + 7, 0);
-    ctx.lineTo(playerCx + 7, playerY);
+    ctx.moveTo(playerCx + 7, playerY);
+    ctx.lineTo(playerCx + 7, height);
     ctx.stroke();
     ctx.restore();
   }
