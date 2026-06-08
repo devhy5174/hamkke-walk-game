@@ -233,7 +233,12 @@ export class GameEngine {
   private isSlowMode = false;
   private slowTimeLeft = 0;
   private slowEaseTimer = 0; // 시계 종료 후 속도 페이드인 카운트다운
-  private snowTrail: Array<{ x: number; absY: number; yd: number; idx: number }> = [];
+  private snowTrail: Array<{
+    x: number;
+    absY: number;
+    yd: number;
+    idx: number;
+  }> = [];
   private snowTrailTimer = 0;
 
   private running = false;
@@ -434,21 +439,32 @@ export class GameEngine {
         const pathLeft = width * ROAD_L;
         const pathRight = width * ROAD_R;
         if (this.touchX !== null) {
-          const target = Math.max(pathLeft, Math.min(this.touchX - this.player.width / 2, pathRight - this.player.width));
+          const target = Math.max(
+            pathLeft,
+            Math.min(
+              this.touchX - this.player.width / 2,
+              pathRight - this.player.width,
+            ),
+          );
           const delta = target - this.player.x;
-          const maxStep = PLAYER_SPEED * 1.8 * this.practiceSpeedMult * (dt / 1000);
-          this.player.x += Math.sign(delta) * Math.min(Math.abs(delta), maxStep);
+          const maxStep =
+            PLAYER_SPEED * 1.8 * this.practiceSpeedMult * (dt / 1000);
+          this.player.x +=
+            Math.sign(delta) * Math.min(Math.abs(delta), maxStep);
         }
         const yMin = this.canvas.height * 0.12;
-        const yMax = this.canvas.height * 0.80;
+        const yMax = this.canvas.height * 0.8;
         if (this.touchY !== null) {
-          const targetY = Math.max(yMin, Math.min(this.touchY - this.player.height / 2, yMax));
+          const targetY = Math.max(
+            yMin,
+            Math.min(this.touchY - this.player.height / 2, yMax),
+          );
           const dy = targetY - this.player.y;
           const maxStep = PLAYER_SPEED * 1.8 * (dt / 1000);
           this.player.y += Math.sign(dy) * Math.min(Math.abs(dy), maxStep);
         }
         // 산책 모드 달빛길: photoMode에서도 발자국 트레일 계속 업데이트
-        if (this.currentThemeId === 'moonlight') {
+        if (this.currentThemeId === "moonlight") {
           const dtSec = dt / 1000;
           const scrollDelta = WATER_BASE_SPEED * this.practiceSpeedMult * dtSec;
           this.snowTrailTimer += dtSec;
@@ -462,7 +478,9 @@ export class GameEngine {
             });
           }
           for (const p of this.snowTrail) p.yd += scrollDelta;
-          this.snowTrail = this.snowTrail.filter(p => p.yd < this.canvas.height + 20);
+          this.snowTrail = this.snowTrail.filter(
+            (p) => p.yd < this.canvas.height + 20,
+          );
         }
       } else {
         // 일반 완주: 캐릭터 중앙으로 이동
@@ -493,7 +511,8 @@ export class GameEngine {
     // 시계 종료 후 slowEaseTimer 동안 0.5→1.0으로 선형 페이드인
     const slowEaseFactor =
       this.slowEaseTimer > 0
-        ? SLOW_FACTOR + (1 - SLOW_FACTOR) * (1 - this.slowEaseTimer / SLOW_EASE_DURATION)
+        ? SLOW_FACTOR +
+          (1 - SLOW_FACTOR) * (1 - this.slowEaseTimer / SLOW_EASE_DURATION)
         : 1;
     const boost = this.isPowerMode
       ? POWER_SPEED_BOOST
@@ -524,9 +543,12 @@ export class GameEngine {
     // 산책 모드 — 위아래 이동
     if (this.isPracticeMode) {
       const yMin = this.canvas.height * 0.12;
-      const yMax = this.canvas.height * 0.80;
+      const yMax = this.canvas.height * 0.8;
       if (this.touchY !== null) {
-        const targetY = Math.max(yMin, Math.min(this.touchY - player.height / 2, yMax));
+        const targetY = Math.max(
+          yMin,
+          Math.min(this.touchY - player.height / 2, yMax),
+        );
         const dy = targetY - player.y;
         const maxStep = PLAYER_SPEED * 1.8 * dtSec;
         player.y += Math.sign(dy) * Math.min(Math.abs(dy), maxStep);
@@ -573,7 +595,11 @@ export class GameEngine {
     this.scrollY = (this.scrollY + scrollDelta) % 60;
 
     // 자국 트레일 포인트 수집 (눈길 + 달빛길 체험)
-    if ((this.currentThemeId === 'snow' || (this.isPracticeMode && this.currentThemeId === 'moonlight')) && this.player) {
+    if (
+      (this.currentThemeId === "snow" ||
+        (this.isPracticeMode && this.currentThemeId === "moonlight")) &&
+      this.player
+    ) {
       this.snowTrailTimer += dtSec;
       if (this.snowTrailTimer >= 0.18) {
         this.snowTrailTimer = 0;
@@ -585,7 +611,9 @@ export class GameEngine {
         });
       }
       for (const p of this.snowTrail) p.yd += scrollDelta;
-      this.snowTrail = this.snowTrail.filter(p => p.yd < this.canvas.height + 20);
+      this.snowTrail = this.snowTrail.filter(
+        (p) => p.yd < this.canvas.height + 20,
+      );
     }
 
     // 거리 증가 + 거리 기반 점수
@@ -862,9 +890,17 @@ export class GameEngine {
       aliveTime: this.aliveTime,
       playerCx: this.player ? this.player.x + this.player.width / 2 : undefined,
       playerY: this.player ? this.player.y + this.player.height : undefined,
-      snowTrail: (this.currentThemeId === 'snow' || (this.isPracticeMode && this.currentThemeId === 'moonlight')) ? this.snowTrail : undefined,
-      snowFootprintImg: this.currentThemeId === 'snow' ? this.getSnowFootprint() : undefined,
-      goldenFootprintImg: (this.isPracticeMode && this.currentThemeId === 'moonlight') ? this.getGoldenFootprint() : undefined,
+      snowTrail:
+        this.currentThemeId === "snow" ||
+        (this.isPracticeMode && this.currentThemeId === "moonlight")
+          ? this.snowTrail
+          : undefined,
+      snowFootprintImg:
+        this.currentThemeId === "snow" ? this.getSnowFootprint() : undefined,
+      goldenFootprintImg:
+        this.isPracticeMode && this.currentThemeId === "moonlight"
+          ? this.getGoldenFootprint()
+          : undefined,
     };
 
     // ── 배경 + 장식 (테마별 렌더링) ──
@@ -1059,7 +1095,7 @@ export class GameEngine {
     const bgSize = 220;
     ctx.save();
     ctx.globalAlpha = appear * 0.22;
-    ctx.shadowColor = '#FFD700';
+    ctx.shadowColor = "#FFD700";
     ctx.shadowBlur = 20;
     ctx.drawImage(fp, cx - bgSize / 2, cy - bgSize / 2, bgSize, bgSize);
     ctx.restore();
@@ -1081,7 +1117,6 @@ export class GameEngine {
     ctx.fillStyle = "rgba(255,255,200,0.9)";
     ctx.fillText("🏆 모든 테마 완주 ✨", 0, 44);
     ctx.restore();
-
   }
 
   private drawFlameEffect() {
@@ -1245,7 +1280,8 @@ export class GameEngine {
 
   private getSnowFootprint(): HTMLCanvasElement | null {
     if (this.footprintSnow) return this.footprintSnow;
-    if (!this.footprintImg.complete || !this.footprintImg.naturalWidth) return null;
+    if (!this.footprintImg.complete || !this.footprintImg.naturalWidth)
+      return null;
     const size = 64;
     const offscreen = document.createElement("canvas");
     offscreen.width = size;
@@ -1255,7 +1291,11 @@ export class GameEngine {
     const data = oc.getImageData(0, 0, size, size);
     const d = data.data;
     for (let i = 0; i < d.length; i += 4) {
-      if (d[i + 3] > 20) { d[i] = 110; d[i + 1] = 150; d[i + 2] = 195; }
+      if (d[i + 3] > 20) {
+        d[i] = 110;
+        d[i + 1] = 150;
+        d[i + 2] = 195;
+      }
     }
     oc.putImageData(data, 0, 0);
     this.footprintSnow = offscreen;
@@ -1414,32 +1454,41 @@ export class GameEngine {
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
     ctx.restore();
 
-    // 발견 직후 반응 텍스트 — 0.8초 동안 떠오르며 사라짐
-    if (noticed && elapsed >= 0 && elapsed < 0.8) {
-      const alpha = 1 - elapsed / 0.8;
-      const rise = elapsed * 22;
+    // 발견 직후 반응 텍스트
+    if (noticed && elapsed >= 0) {
       ctx.save();
-      ctx.globalAlpha = alpha;
       ctx.textAlign = "center";
 
       if (obs.dodgerType === "hiker") {
-        // 등산객: "먼저 가세요~!" 말풍선 스타일
-        const text = "먼저 가세요~!";
-        ctx.font = "bold 13px sans-serif";
-        const tw = ctx.measureText(text).width;
-        const bx = cx - tw / 2 - 8;
-        const by = y - 44 - rise;
-        ctx.fillStyle = "#fff";
-        ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        rrect(ctx, bx, by, tw + 16, 24, 12);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = "#2D7D52";
-        ctx.fillText(text, cx, by + 16);
-      } else {
+        // 등산객: 두 메시지 순차 표시
+        const messages = ["앗! 먼저 가세요~! 🙏", "바람 소리가 참 좋네요~ 🌬️"];
+        const msgDur = 1.0;  // 메시지당 지속 시간
+        const msgIdx = Math.floor(elapsed / msgDur);
+        if (msgIdx < messages.length) {
+          const t = elapsed % msgDur;
+          const alpha = t < 0.1 ? t / 0.1 : t > 0.8 ? (1 - t) / 0.2 : 1;
+          const rise = msgIdx * 8; // 두 번째 메시지는 조금 더 올라감
+          ctx.globalAlpha = Math.max(0, alpha);
+          const text = messages[msgIdx];
+          ctx.font = "bold 13px sans-serif";
+          const tw = ctx.measureText(text).width;
+          const bx = cx - tw / 2 - 8;
+          const by = y - 44 - rise;
+          ctx.fillStyle = "#fff";
+          ctx.strokeStyle = "rgba(0,0,0,0.1)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          rrect(ctx, bx, by, tw + 16, 24, 12);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#2D7D52";
+          ctx.fillText(text, cx, by + 16);
+        }
+      } else if (elapsed < 0.8) {
         // 다람쥐: "!" 표시
+        const alpha = 1 - elapsed / 0.8;
+        const rise = elapsed * 22;
+        ctx.globalAlpha = alpha;
         ctx.font = "bold 32px sans-serif";
         ctx.lineWidth = 5;
         ctx.strokeStyle = "#7B3F00";
@@ -1473,7 +1522,15 @@ export class GameEngine {
       ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,1)";
       ctx.beginPath();
-      ctx.ellipse(cx - w * 0.06, topY - h * 0.04, w * 0.14, h * 0.08, -0.3, 0, Math.PI * 2);
+      ctx.ellipse(
+        cx - w * 0.06,
+        topY - h * 0.04,
+        w * 0.14,
+        h * 0.08,
+        -0.3,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
       ctx.restore();
     }
