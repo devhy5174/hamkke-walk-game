@@ -604,7 +604,6 @@ function drawBambooOverhang(
   slot: number,
   aliveTime: number,
 ) {
-  const dir = isLeft ? 1 : -1;
   const w = 8;
   const len = Math.abs(pathEdgeX - edgeX) + 10 + (Math.abs(slot) % 3) * 6;
   const tipX = edgeX + (isLeft ? len : -len);
@@ -631,24 +630,21 @@ function drawBambooOverhang(
   ctx.restore();
 
   // ── 물방울 (대나무 끝에서 뚝뚝) ──
-  const dropSpeed  = 180;
-  const maxFall    = 90;
-  const dropCount  = 3;
+  const maxFall   = 90;
+  const dropCount = 3;
   for (let k = 0; k < dropCount; k++) {
-    const phase  = (k / dropCount);
-    const t      = ((aliveTime * 0.7 + phase + slot * 0.31) % 1); // 0→1 반복
+    const phase  = k / dropCount;
+    const t      = (aliveTime * 0.7 + phase + slot * 0.31) % 1;
     const dropY  = tipY + w / 2 + t * maxFall;
     const alpha  = t < 0.15 ? t / 0.15 : t > 0.75 ? (1 - t) / 0.25 : 1;
     const radius = 2.8 * (1 - t * 0.5);
 
     ctx.save();
     ctx.globalAlpha = alpha * 0.75;
-    // 물방울 본체 (타원)
     ctx.fillStyle = 'rgba(100,190,220,1)';
     ctx.beginPath();
     ctx.ellipse(tipX, dropY, radius * 0.7, radius, 0, 0, Math.PI * 2);
     ctx.fill();
-    // 하이라이트
     ctx.fillStyle = 'rgba(200,240,255,0.8)';
     ctx.beginPath();
     ctx.ellipse(tipX - radius * 0.2, dropY - radius * 0.3, radius * 0.25, radius * 0.3, 0, 0, Math.PI * 2);
