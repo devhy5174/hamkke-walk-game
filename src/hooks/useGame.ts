@@ -3,7 +3,7 @@ import type { RefObject } from "react";
 import { GameEngine } from "../game/GameEngine";
 import type { GameStats, Milestone } from "../game/types";
 import { type GameTheme, THEMES } from "../game/themes";
-import { saveRecord } from "../utils/records";
+import { saveRecord, getRecords } from "../utils/records";
 import { unlockTheme } from "../utils/themeCollection";
 import { audioManager } from "../utils/audio";
 
@@ -21,7 +21,10 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [powerTimeLeft, setPowerTimeLeft] = useState(0);
   const [isSlowMode, setIsSlowMode] = useState(false);
   const [slowTimeLeft, setSlowTimeLeft] = useState(0);
-  const [bestScore, setBestScore] = useState(0);
+  const [bestScore, setBestScore] = useState(() => {
+    const records = getRecords();
+    return records.length > 0 ? records[0].score : 0;
+  });
   const [gameEnded, setGameEnded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
