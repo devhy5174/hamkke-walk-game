@@ -5,7 +5,7 @@ interface Props {
   theme: GameTheme;
 }
 
-const THEME_STYLES: Record<string, {
+export const THEME_STYLES: Record<string, {
   bg: string;
   border: string;
   color: string;
