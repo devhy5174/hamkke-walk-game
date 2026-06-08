@@ -510,16 +510,19 @@ export class GameEngine {
     const { width } = this.canvas;
     const sm = this.speedMult;
     // 파워모드 > 슬로우 우선순위 (동시에 발동 시 파워모드 적용)
-    // 시계 종료 후 slowEaseTimer 동안 0.5→1.0으로 선형 페이드인
+    // B방식: 파워=min(×1.7, +1.2) / 시계=max(1.0, sm-1.2) → 고속에서 균형 유지
+    const powerBoost  = Math.min(POWER_SPEED_BOOST, 1 + 1.2 / sm);
+    const slowSpeed   = Math.max(1.0, sm - 1.2);
+    const slowBoost   = slowSpeed / sm;
+    // 시계 종료 페이드인: slowBoost → 1.0
     const slowEaseFactor =
       this.slowEaseTimer > 0
-        ? SLOW_FACTOR +
-          (1 - SLOW_FACTOR) * (1 - this.slowEaseTimer / SLOW_EASE_DURATION)
+        ? slowBoost + (1 - slowBoost) * (1 - this.slowEaseTimer / SLOW_EASE_DURATION)
         : 1;
     const boost = this.isPowerMode
-      ? POWER_SPEED_BOOST
+      ? powerBoost
       : this.isSlowMode
-        ? SLOW_FACTOR
+        ? slowBoost
         : slowEaseFactor;
     const pathLeft = width * ROAD_L;
     const pathRight = width * ROAD_R;
