@@ -373,7 +373,7 @@ function renderSnow(rc: RenderCtx) {
     }
   }
 
-  // ── 눈송이 낙하 ──
+  // ── 원래 반짝이는 눈송이 (scrollY 기반, 사이드 집중) ──
   const period = 52;
   const world = Math.floor(scrollY / period);
   for (let i = 0; i <= Math.ceil((height + period * 2) / period); i++) {
@@ -386,11 +386,33 @@ function renderSnow(rc: RenderCtx) {
       drawSnowflake(ctx, x + drift, y + j * (period / 4), size);
     }
   }
+
+  // ── 추가: 시간 기반 파티클 — 위에서 펑펑 낙하 ──
+  for (let i = 0; i < 50; i++) {
+    const s1 = i * 1327, s2 = i * 743, s3 = i * 491;
+    const speed = 60 + (s1 % 11) * 16;
+    const baseX = 6 + (s2 % (width - 12));
+    const phase = s3 % height;
+    const size  = 1.8 + (s1 % 4) * 1.2;
+    const alpha = 0.45 + Math.abs(Math.sin(aliveTime * 1.2 + i * 0.7)) * 0.35;
+    const drift = Math.sin(aliveTime * (0.3 + (i % 6) * 0.07) + i * 1.1) * 8;
+    const y = (aliveTime * speed + phase) % height;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(230,242,255,1)';
+    ctx.beginPath();
+    ctx.arc(baseX + drift, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 
+
 function drawSnowflake(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
-  ctx.strokeStyle = 'rgba(200,230,255,0.75)';
+  ctx.save();
+  ctx.strokeStyle = 'rgba(200,230,255,0.85)';
   ctx.lineWidth = 1.5;
   for (let i = 0; i < 3; i++) {
     const a = (i / 3) * Math.PI;
@@ -399,8 +421,9 @@ function drawSnowflake(ctx: CanvasRenderingContext2D, cx: number, cy: number, r:
     ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
     ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(220,240,255,0.9)';
-  ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(230,245,255,0.95)';
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.28, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 // 🎋 대나무숲길 (흔들리는 기둥 + 사이드 잎 + 허공 낙엽)
