@@ -58,12 +58,12 @@ MVP 완료 후 지속 기능 추가 중.
 테마 시스템 (7개)
 
 - 0m    🌳 공원: 바위, 물웅덩이
-- 150m  🌲 숲길: 그루터기, 다람쥐 dodger, 웅덩이
-- 350m  🍁 단풍: 바위, 단풍낙엽
-- 600m  🌸 벚꽃: 바위, 벚꽃낙엽
-- 1000m ❄️ 눈길: 바위, 눈사람
-- 1500m 🎋 대나무: 죽순🎍(홀수id), 돌맹이(짝수id), 등산객 dodger (puddle 100%)
-- 2000m 🌙 달빛 (보너스): 장애물·시계 없음, 황금 발자국 +20점, 90초 타이머
+- 150m  🌲 숲길: 그루터기, 다람쥐 dodger, 웅덩이 / 반딧불 이펙트
+- 350m  🍁 단풍: 바위, 단풍낙엽 / 단풍나무 가지 사이드
+- 600m  🌸 벚꽃: 바위, 벚꽃낙엽 / 벚꽃 가지 오버행 + 꽃잎 낙화
+- 1000m ❄️ 눈길: 바위(눈 쌓임), 눈사람 / 눈 파티클 + 발자국 트레일
+- 1500m 🎋 대나무: 돌맹이, 등산객 dodger / 사선 대나무 묶음 + 물방울
+- 2000m 🌙 달빛 (보너스): 장애물·시계 없음, 황금 발자국 +20점, 90초 타이머 / 나무 실루엣 + 별가루
 
 달빛길 완주 시스템
 
@@ -97,7 +97,28 @@ BGM
 
 - 테마 최초 진입 시 자동 해금
 - 실제 배경 애니메이션 + 장애물 미리보기 (달빛길은 황금 발자국 애니메이션)
-- 달빛길은 보너스 구간으로 금색 점선 테두리 + ✨ 아이콘
+- 달빛길은 보너스 구간으로 금색 점선 테두리 + ✨ 아이콘 + 달 float 애니메이션
+- 산책하기 버튼: 전체 해금 시 활성화, 테마별 색상 적용
+
+산책 모드 (전체 해금 후 활성화)
+
+- 도감에서 테마 선택 후 진입 — 속도 고정, 아이템 없음, 충돌 무시
+- 상하좌우 드래그 이동, 하단 ＋/－ 속도 조절 버튼 (6단계: 1.0x~5.0x)
+- 테마별 색상 간판 + 분위기 말풍선 (6~11초 랜덤)
+- 달빛길 포토타임: 자유 이동 유지, 황금 발자국 트레일, 말풍선 편집 가능
+- practiceSpeedMult 필드로 외부 속도 조절 — speedMult getter에서 isPracticeMode 우선 적용
+
+주요 컴포넌트 (신규)
+
+- TipsModal: 게임 방법 안내 팝업 (메인 화면 버튼)
+- PracticeThemeBanner: 산책 모드 상단 테마별 색상 간판 (THEME_STYLES export)
+
+기타 개선
+
+- 시계 종료 후 1.2초 속도 페이드인 (slowEaseTimer)
+- 다람쥐·등산객 이동 방향으로 이미지 좌우 반전
+- 등산객 말풍선 2단 순차 표시
+- snowTrailIdx 단조 증가 카운터 (필터링 후 좌우 패턴 유지)
 
 ⸻
 
@@ -108,14 +129,16 @@ src/
 ├── App.tsx
 
 ├── components/
-│ ├── GameCanvas.tsx # 캔버스 + 터치/키보드 입력
+│ ├── GameCanvas.tsx # 캔버스 + 터치/키보드 입력 (상하좌우 지원)
 │ ├── GameHUD.tsx
 │ ├── GameOverModal.tsx
 │ ├── CharacterSelect.tsx
 │ ├── ThemeCollectionModal.tsx
+│ ├── TipsModal.tsx # 게임 방법 안내 팝업
+│ ├── PracticeThemeBanner.tsx # 산책 모드 테마별 간판 (THEME_STYLES export)
 │ ├── MilestoneToast.tsx
 │ ├── ThemeToast.tsx
-│ ├── SpeechBubble.tsx
+│ ├── SpeechBubble.tsx # editable prop으로 포토타임 말풍선 편집 가능
 │ ├── PowerOverlay.tsx
 │ ├── RecordsModal.tsx
 │ └── RankingModal.tsx # 점수순/거리순 탭
