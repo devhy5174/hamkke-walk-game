@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { MdDirectionsWalk } from "react-icons/md";
+import { THEME_STYLES } from "./PracticeThemeBanner";
 import type { CSSProperties } from "react";
 import { THEMES } from "../game/themes";
 import type { GameTheme } from "../game/themes";
@@ -259,11 +261,27 @@ function ThemeDetailPopup({
           </div>
         </div>
         <p style={detailDesc}>{DESCRIPTIONS[theme.id]}</p>
-        {allUnlocked && onPractice && (
-          <button style={practiceBtn} onClick={() => onPractice(theme)}>
-            🎮 산책하기
-          </button>
-        )}
+        {allUnlocked && onPractice && (() => {
+          const ts = THEME_STYLES[theme.id] ?? THEME_STYLES.park;
+          return (
+            <button
+              onClick={() => onPractice(theme)}
+              style={{
+                ...practiceBtn,
+                background: ts.bg,
+                boxShadow: `0 4px 14px ${ts.shadow}`,
+                border: `1px solid ${ts.border}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              <MdDirectionsWalk size={18} color={ts.color} />
+              <span style={{ color: ts.color }}>산책하기</span>
+            </button>
+          );
+        })()}
         <button style={closeBtn} onClick={onClose}>
           닫기
         </button>
@@ -395,25 +413,22 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
       {showPracticeNotice && (
         <div style={noticeBackdrop} onClick={dismissNotice}>
           <div style={noticeCard} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontSize: "2.8rem", marginBottom: 8 }}>🎮</div>
-            <div style={noticeTitle}>산책 산책 모드 활성화!</div>
+            <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
+              <MdDirectionsWalk size={56} color="#3DAE79" />
+            </div>
+            <div style={noticeTitle}>산책 모드 활성화!</div>
             <div style={noticeBody}>
               모든 테마를 해금했어요 🎉
-              <br />각 테마를 탭하면 <strong>산책하기</strong> 버튼이 생겨요.
-              <br />
-              장애물에 부딪혀도 괜찮으니 마음껏 산책해보세요!
+              <br />각 테마를 탭하면 <strong style={{ color: "#2D7D52" }}>산책하기</strong> 버튼이 생겨요.
+              <br /><br />
+              공원부터 대나무숲까지,<br />
+              각 테마만의 분위기를 천천히 즐겨보세요 🌿
             </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "rgba(255,255,255,0.55)",
-                marginBottom: 18,
-              }}
-            >
+            <div style={{ fontSize: 12, color: "#A0B4AC", marginBottom: 18 }}>
               기록·랭킹에는 반영되지 않아요
             </div>
             <button style={noticeBtn} onClick={dismissNotice}>
-              알겠어요! 산책해볼게요 ✨
+              알겠어요! 산책해볼게요 🌿
             </button>
           </div>
         </div>
@@ -536,7 +551,7 @@ const gridRange: CSSProperties = {
 };
 
 const practiceBtn: CSSProperties = {
-  background: "linear-gradient(135deg, #667eea, #764ba2)",
+  background: "#3DAE79",
   color: "#fff",
   border: "none",
   borderRadius: 50,
@@ -546,7 +561,7 @@ const practiceBtn: CSSProperties = {
   cursor: "pointer",
   width: "100%",
   marginBottom: 8,
-  boxShadow: "0 4px 14px rgba(102,126,234,0.4)",
+  boxShadow: "0 4px 14px rgba(61,174,121,0.35)",
 };
 
 const closeBtn: CSSProperties = {
@@ -569,44 +584,44 @@ const noticeBackdrop: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "rgba(30,10,60,0.75)",
+  background: "rgba(200,235,218,0.6)",
   backdropFilter: "blur(6px)",
   zIndex: 70,
 };
 const noticeCard: CSSProperties = {
-  background: "linear-gradient(145deg, #4a3080, #2d1a5e)",
-  border: "1.5px solid rgba(180,140,255,0.35)",
+  background: "#fff",
+  border: "1.5px solid #D0EEE0",
   borderRadius: 28,
-  padding: "32px 28px 24px",
+  padding: "28px 28px 22px",
   textAlign: "center",
   maxWidth: 300,
   width: "88%",
-  boxShadow: "0 12px 40px rgba(102,60,220,0.5)",
+  boxShadow: "0 8px 40px rgba(61,174,121,0.18)",
 };
 const noticeTitle: CSSProperties = {
-  fontSize: "1.3rem",
+  fontSize: "1.2rem",
   fontWeight: 800,
-  color: "#fff",
-  marginBottom: 12,
+  color: "#2D7D52",
+  marginBottom: 10,
   letterSpacing: -0.3,
 };
 const noticeBody: CSSProperties = {
   fontSize: "0.88rem",
-  color: "rgba(255,255,255,0.8)",
+  color: "#5A8A72",
   lineHeight: 1.7,
   marginBottom: 8,
 };
 const noticeBtn: CSSProperties = {
   width: "100%",
   padding: "14px 0",
-  background: "linear-gradient(135deg, #667eea, #764ba2)",
+  background: "#3DAE79",
   border: "none",
   borderRadius: 50,
   fontSize: "0.95rem",
   fontWeight: 800,
   color: "#fff",
   cursor: "pointer",
-  boxShadow: "0 4px 16px rgba(102,126,234,0.5)",
+  boxShadow: "0 4px 16px rgba(61,174,121,0.35)",
 };
 
 // 상세 팝업

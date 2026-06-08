@@ -14,7 +14,10 @@ import { ThemeCollectionModal } from "./components/ThemeCollectionModal";
 import { TipsModal } from "./components/TipsModal";
 import { CharacterSelect } from "./components/CharacterSelect";
 import { SpeechBubble } from "./components/SpeechBubble";
-import { PracticeThemeBanner, THEME_STYLES } from "./components/PracticeThemeBanner";
+import {
+  PracticeThemeBanner,
+  THEME_STYLES,
+} from "./components/PracticeThemeBanner";
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
 import { audioManager } from "./utils/audio";
 import "./App.css";
@@ -56,7 +59,9 @@ function App() {
   } = useGame(canvasRef);
 
   const [isMuted, setIsMuted] = useState(audioManager.muted);
-  const [photoCaption, setPhotoCaption] = useState("산책길도감 많이 사랑해주세요 🌿");
+  const [photoCaption, setPhotoCaption] = useState(
+    "산책길 모험 많이 사랑해주세요 🌿",
+  );
   const PRACTICE_SPEEDS = [
     { mult: 1.0, label: "🌳", desc: "1단계" },
     { mult: 1.5, label: "🌲", desc: "2단계" },
@@ -141,9 +146,9 @@ function App() {
         )}
         {isStarted && (
           <SpeechBubble
-            message={isPhotoMode
-              ? (isPractice ? photoCaption : photoMsg)
-              : dodgerMsg}
+            message={
+              isPhotoMode ? (isPractice ? photoCaption : photoMsg) : dodgerMsg
+            }
             engineRef={engineRef}
             canvasRef={canvasRef}
             multiline={isPhotoMode}
@@ -152,7 +157,9 @@ function App() {
             onEdit={setPhotoCaption}
           />
         )}
-        {isStarted && !isPractice && <MilestoneToast milestone={activeMilestone} />}
+        {isStarted && !isPractice && (
+          <MilestoneToast milestone={activeMilestone} />
+        )}
         {isStarted && <ThemeToast theme={activeThemeToast} />}
         {isStarted && !isPhotoMode && (
           <PowerOverlay
@@ -219,8 +226,9 @@ function App() {
         )}
 
         {/* 달빛길 포토모드 */}
-        {isPhotoMode && !gameEnded && (
-          isPractice ? null : (
+        {isPhotoMode &&
+          !gameEnded &&
+          (isPractice ? null : (
             <div
               onClick={confirmComplete}
               style={{
@@ -513,7 +521,7 @@ function App() {
             onPractice={(theme) => {
               setShowCollection(false);
               setPracticeSpeedIdx(0);
-            startPractice(theme, selectedChar.src);
+              startPractice(theme, selectedChar.src);
             }}
           />
         )}
@@ -542,56 +550,225 @@ function App() {
             {(() => {
               const ts = THEME_STYLES[currentTheme.id] ?? THEME_STYLES.park;
               const btnBase = {
-                height: 44, borderRadius: 50,
-                background: ts.bg, backdropFilter: "blur(10px)",
+                height: 44,
+                borderRadius: 50,
+                background: ts.bg,
+                backdropFilter: "blur(10px)",
                 border: `1px solid ${ts.border}`,
                 boxShadow: `0 2px 12px ${ts.shadow}`,
-                color: ts.color, fontWeight: 700, fontSize: 13,
+                color: ts.color,
+                fontWeight: 700,
+                fontSize: 13,
                 cursor: "pointer",
               } as const;
-              return (<>
-                {/* 나가기 */}
-                <button onClick={() => setShowPracticeExit(true)} style={{ ...btnBase, position: "absolute", bottom: 20, left: 20, padding: "0 18px", zIndex: 50 }}>
-                  나가기
-                </button>
+              return (
+                <>
+                  {/* 나가기 */}
+                  <button
+                    onClick={() => setShowPracticeExit(true)}
+                    style={{
+                      ...btnBase,
+                      position: "absolute",
+                      bottom: 20,
+                      left: 20,
+                      padding: "0 18px",
+                      zIndex: 50,
+                    }}
+                  >
+                    나가기
+                  </button>
 
-                {/* 속도 ＋/－ */}
-                <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", ...btnBase, padding: 0, zIndex: 50, overflow: "hidden" }}>
-                  <button onClick={() => { const n = Math.max(0, practiceSpeedIdx - 1); setPracticeSpeedIdx(n); if (engineRef.current) engineRef.current.practiceSpeedMult = PRACTICE_SPEEDS[n].mult; }} disabled={practiceSpeedIdx === 0}
-                    style={{ width: 40, height: 44, border: "none", background: "transparent", fontSize: 18, fontWeight: 700, color: practiceSpeedIdx === 0 ? `${ts.subColor}` : ts.color, cursor: practiceSpeedIdx === 0 ? "default" : "pointer" }}>－</button>
-                  <div style={{ padding: "0 10px", fontSize: 13, fontWeight: 700, color: ts.color, display: "flex", alignItems: "center", gap: 4, borderLeft: `1px solid ${ts.border}`, borderRight: `1px solid ${ts.border}`, height: "100%" }}>
-                    <span style={{ fontSize: 16 }}>{PRACTICE_SPEEDS[practiceSpeedIdx].label}</span>
-                    <span>{PRACTICE_SPEEDS[practiceSpeedIdx].desc}</span>
+                  {/* 속도 ＋/－ */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 20,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      display: "flex",
+                      alignItems: "center",
+                      ...btnBase,
+                      padding: 0,
+                      zIndex: 50,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        const n = Math.max(0, practiceSpeedIdx - 1);
+                        setPracticeSpeedIdx(n);
+                        if (engineRef.current)
+                          engineRef.current.practiceSpeedMult =
+                            PRACTICE_SPEEDS[n].mult;
+                      }}
+                      disabled={practiceSpeedIdx === 0}
+                      style={{
+                        width: 40,
+                        height: 44,
+                        border: "none",
+                        background: "transparent",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color:
+                          practiceSpeedIdx === 0 ? `${ts.subColor}` : ts.color,
+                        cursor: practiceSpeedIdx === 0 ? "default" : "pointer",
+                      }}
+                    >
+                      －
+                    </button>
+                    <div
+                      style={{
+                        padding: "0 10px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: ts.color,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        borderLeft: `1px solid ${ts.border}`,
+                        borderRight: `1px solid ${ts.border}`,
+                        height: "100%",
+                      }}
+                    >
+                      <span style={{ fontSize: 16 }}>
+                        {PRACTICE_SPEEDS[practiceSpeedIdx].label}
+                      </span>
+                      <span>{PRACTICE_SPEEDS[practiceSpeedIdx].desc}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const n = Math.min(
+                          PRACTICE_SPEEDS.length - 1,
+                          practiceSpeedIdx + 1,
+                        );
+                        setPracticeSpeedIdx(n);
+                        if (engineRef.current)
+                          engineRef.current.practiceSpeedMult =
+                            PRACTICE_SPEEDS[n].mult;
+                      }}
+                      disabled={practiceSpeedIdx === PRACTICE_SPEEDS.length - 1}
+                      style={{
+                        width: 40,
+                        height: 44,
+                        border: "none",
+                        background: "transparent",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color:
+                          practiceSpeedIdx === PRACTICE_SPEEDS.length - 1
+                            ? ts.subColor
+                            : ts.color,
+                        cursor:
+                          practiceSpeedIdx === PRACTICE_SPEEDS.length - 1
+                            ? "default"
+                            : "pointer",
+                      }}
+                    >
+                      ＋
+                    </button>
                   </div>
-                  <button onClick={() => { const n = Math.min(PRACTICE_SPEEDS.length - 1, practiceSpeedIdx + 1); setPracticeSpeedIdx(n); if (engineRef.current) engineRef.current.practiceSpeedMult = PRACTICE_SPEEDS[n].mult; }} disabled={practiceSpeedIdx === PRACTICE_SPEEDS.length - 1}
-                    style={{ width: 40, height: 44, border: "none", background: "transparent", fontSize: 18, fontWeight: 700, color: practiceSpeedIdx === PRACTICE_SPEEDS.length - 1 ? ts.subColor : ts.color, cursor: practiceSpeedIdx === PRACTICE_SPEEDS.length - 1 ? "default" : "pointer" }}>＋</button>
-                </div>
-              </>);
+                </>
+              );
             })()}
 
             {/* 산책 모드 종료 확인 팝업 */}
-            {showPracticeExit && (() => {
-              const ts = THEME_STYLES[currentTheme.id] ?? THEME_STYLES.park;
-              return (
-                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ background: ts.bg, border: `1.5px solid ${ts.border}`, borderRadius: 28, padding: "28px 24px 22px", textAlign: "center", width: "82%", maxWidth: 300, boxShadow: `0 12px 40px ${ts.shadow}` }}>
-                    <div style={{ fontSize: "2rem", marginBottom: 8 }}>{currentTheme.emoji}</div>
-                    <div style={{ fontSize: "1.1rem", fontWeight: 800, color: ts.color, marginBottom: 4 }}>산책 모드 종료</div>
-                    <div style={{ fontSize: "0.82rem", color: ts.subColor, marginBottom: 22, lineHeight: 1.6 }}>어떻게 하시겠어요?</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      <button onClick={() => setShowPracticeExit(false)}
-                        style={{ padding: "13px 0", borderRadius: 50, border: `1.5px solid ${ts.border}`, background: "transparent", color: ts.color, fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>
-                        계속 산책하기
-                      </button>
-                      <button onClick={() => { setShowPracticeExit(false); exitPractice(); setShowCollection(true); }}
-                        style={{ padding: "13px 0", borderRadius: 50, border: `1.5px solid ${ts.border}`, background: "transparent", color: ts.color, fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>
-                        🗺️ 산책 도감으로
-                      </button>
+            {showPracticeExit &&
+              (() => {
+                const ts = THEME_STYLES[currentTheme.id] ?? THEME_STYLES.park;
+                return (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "rgba(0,0,0,0.55)",
+                      backdropFilter: "blur(8px)",
+                      zIndex: 60,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: ts.bg,
+                        border: `1.5px solid ${ts.border}`,
+                        borderRadius: 28,
+                        padding: "28px 24px 22px",
+                        textAlign: "center",
+                        width: "82%",
+                        maxWidth: 300,
+                        boxShadow: `0 12px 40px ${ts.shadow}`,
+                      }}
+                    >
+                      <div style={{ fontSize: "2rem", marginBottom: 8 }}>
+                        {currentTheme.emoji}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "1.1rem",
+                          fontWeight: 800,
+                          color: ts.color,
+                          marginBottom: 4,
+                        }}
+                      >
+                        산책 모드 종료
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.82rem",
+                          color: ts.subColor,
+                          marginBottom: 22,
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        어떻게 하시겠어요?
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 10,
+                        }}
+                      >
+                        <button
+                          onClick={() => setShowPracticeExit(false)}
+                          style={{
+                            padding: "13px 0",
+                            borderRadius: 50,
+                            border: `1.5px solid ${ts.border}`,
+                            background: "transparent",
+                            color: ts.color,
+                            fontSize: "0.95rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          계속 산책하기
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPracticeExit(false);
+                            exitPractice();
+                            setShowCollection(true);
+                          }}
+                          style={{
+                            padding: "13px 0",
+                            borderRadius: 50,
+                            border: `1.5px solid ${ts.border}`,
+                            background: "transparent",
+                            color: ts.color,
+                            fontSize: "0.95rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          🗺️ 산책 도감으로
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
           </>
         )}
 
