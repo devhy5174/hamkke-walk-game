@@ -600,8 +600,8 @@ function App() {
         </>
       )}
 
-      {/* 음소거 버튼 */}
-      <button
+      {/* 음소거 버튼 — 게임 중에만 표시 */}
+      {isStarted && <button
         onClick={handleToggleMute}
         style={{
           position: "absolute",
@@ -628,7 +628,7 @@ function App() {
           ? <HiSpeakerXMark size={22} color="#888" />
           : <HiSpeakerWave size={22} color="#3DAE79" />
         }
-      </button>
+      </button>}
     </div>
     </>
   );
