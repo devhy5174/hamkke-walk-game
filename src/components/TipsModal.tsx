@@ -264,32 +264,6 @@ function ObsItem({
   );
 }
 
-function ObsItemEmoji({
-  emoji,
-  label,
-  sub,
-}: {
-  emoji: string;
-  label: string;
-  sub: string;
-}) {
-  return (
-    <div style={obstacleItem}>
-      <span
-        style={{
-          fontSize: "2rem",
-          display: "block",
-          height: 44,
-          lineHeight: "44px",
-        }}
-      >
-        {emoji}
-      </span>
-      <div style={obstacleLabel}>{label}</div>
-      <div style={obsSubLabel}>{sub}</div>
-    </div>
-  );
-}
 
 // ── 스타일 ──────────────────────────────────────────────────────────────────
 

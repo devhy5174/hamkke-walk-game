@@ -749,7 +749,7 @@ export class GameEngine {
     // ── 장애물 ──
     for (const obs of this.obstacles) {
       if (obs.variant === "rock") {
-        this.drawRock(obs.x, obs.y, obs.width, obs.height, obs.id);
+        this.drawRock(obs.x, obs.y, obs.width, obs.height);
       } else if (obs.style === "dodger") {
         this.drawDodgingObstacle(obs);
       } else {
@@ -1304,7 +1304,7 @@ export class GameEngine {
     }
   }
 
-  private drawRock(x: number, y: number, w: number, h: number, obsId = 0) {
+  private drawRock(x: number, y: number, w: number, h: number) {
     const tid = getThemeByDistance(this.distanceMeters).id;
     const { ctx } = this;
     const img = this.obsRockByTheme[tid] ?? this.obsRockByTheme["default"];
