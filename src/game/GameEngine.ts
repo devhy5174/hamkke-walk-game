@@ -1262,6 +1262,9 @@ export class GameEngine {
     ctx.save();
     ctx.shadowColor = "rgba(40,40,40,0.65)";
     ctx.shadowBlur = 4;
+    if (obs.dodgerType === "hiker") {
+      ctx.filter = "saturate(180%) contrast(130%) brightness(110%)";
+    }
     ctx.translate(cx, cy + bob);
     ctx.rotate(tilt);
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
