@@ -130,12 +130,37 @@ BGM
 - TipsModal: 게임 방법 안내 팝업 (메인 화면 버튼)
 - PracticeThemeBanner: 산책 모드 상단 테마별 색상 간판 (THEME_STYLES export)
 
+HUD 테마별 디자인
+
+- GameHUD.tsx 내 THEME_HUD 테이블로 테마마다 배경·색상·게이지 개별 지정
+- 공원·벚꽃·단풍·눈길: 라이트 배경 + 진한 텍스트
+- 숲길·대나무·달빛길: 다크 배경 + 밝은 텍스트
+- transition으로 테마 전환 시 부드럽게 변경
+
+성능 최적화
+
+- emitUpdate 100ms 스로틀링 — React 리렌더 60fps → ~10fps (아이템 수집·모드 전환만 force=true 즉각 반영)
+- filter() → in-place splice — 매 프레임 6개 배열 생성 제거로 GC 압박 해소
+- 물병 SFX Web Audio API 전환 — iOS HTMLAudioElement.play() 메인 스레드 블로킹 제거
+  - 첫 터치 시 AudioContext 언락 + sfx 미리 디코딩 (GameCanvas.tsx)
+  - playWater()에서 AudioBufferSourceNode 재생
+
+로딩 스플래시
+
+- index.html에 순수 CSS 스플래시 (JS 실행 전부터 즉시 표시, 검정 깜빡임 제거)
+- app_logo.png + item-footprint.png 걷기 애니메이션 (좌-우-좌 0.55초 간격)
+- 발자국 색상: CSS filter로 게임 그린(#3DAE79) 변환
+- 최소 1.2초 노출 후 0.35초 페이드 아웃
+
 기타 개선
 
 - 시계 종료 후 1.2초 속도 페이드인 (slowEaseTimer)
 - 다람쥐·등산객 이동 방향으로 이미지 좌우 반전
 - 등산객 말풍선 2단 순차 표시
 - snowTrailIdx 단조 증가 카운터 (필터링 후 좌우 패턴 유지)
+- darkeat 땀방울 파티클 숨김 (컷신 중 completionIntro.isActive 조건)
+- eatfp 중 밝은 배경에서 황금 발자국 흰 후광 추가 (fadeAlpha < 0.5)
+- 포토타임 파워모드 이펙트(불꽃·오브·비네트) 숨김
 
 ⸻
 

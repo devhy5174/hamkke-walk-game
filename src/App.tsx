@@ -12,6 +12,7 @@ import { RecordsModal } from "./components/RecordsModal";
 import { RankingModal } from "./components/RankingModal";
 import { ThemeCollectionModal } from "./components/ThemeCollectionModal";
 import { TipsModal } from "./components/TipsModal";
+import { SettingsModal } from "./components/SettingsModal";
 import { CharacterSelect } from "./components/CharacterSelect";
 import { SpeechBubble } from "./components/SpeechBubble";
 import {
@@ -80,6 +81,7 @@ function App() {
   const [showRankingViewOnly, setShowRankingViewOnly] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [rankingDone, setRankingDone] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState(getSavedCharId());
 
@@ -206,31 +208,36 @@ function App() {
               <button className="btn-primary" onClick={handleStart}>
                 걷기 시작 🌿
               </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setShowCollection(true)}
-              >
-                🗺️ 산책 도감
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setShowRankingViewOnly(true)}
-              >
-                🌍 전체 랭킹 보기
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setShowTips(true)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                }}
-              >
-                <IoHelpCircle size={16} />
-                게임 방법 보기
-              </button>
+              <div className="btn-grid-row">
+                <button
+                  className="btn-grid"
+                  onClick={() => setShowCollection(true)}
+                >
+                  <span className="btn-grid-icon">🗺️</span>
+                  <span className="btn-grid-label">산책 도감</span>
+                </button>
+                <button
+                  className="btn-grid"
+                  onClick={() => setShowRankingViewOnly(true)}
+                >
+                  <span className="btn-grid-icon">🌍</span>
+                  <span className="btn-grid-label">전체 랭킹</span>
+                </button>
+                <button
+                  className="btn-grid"
+                  onClick={() => setShowTips(true)}
+                >
+                  <IoHelpCircle size={22} color="#3DAE79" />
+                  <span className="btn-grid-label">게임 방법</span>
+                </button>
+                <button
+                  className="btn-grid"
+                  onClick={() => setShowSettings(true)}
+                >
+                  <span className="btn-grid-icon">⚙️</span>
+                  <span className="btn-grid-label">설정</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -525,6 +532,13 @@ function App() {
         )}
 
         {showTips && <TipsModal onClose={() => setShowTips(false)} />}
+        {showSettings && (
+          <SettingsModal
+            onClose={() => setShowSettings(false)}
+            isMuted={isMuted}
+            onToggleMute={handleToggleMute}
+          />
+        )}
         {showCollection && (
           <ThemeCollectionModal
             onClose={() => setShowCollection(false)}
