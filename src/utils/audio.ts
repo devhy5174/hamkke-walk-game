@@ -98,8 +98,6 @@ class AudioManager {
       src.stop(this.audioCtx.currentTime + 1.5);
     } else {
       // fallback: HTMLAudioElement (Web Audio 미지원 환경)
-      const clone = this.bgm.cloneNode(false) as HTMLAudioElement;
-      // sfx 전용 — bgm 복사 아닌 별도 Audio 생성
       const sfx = new Audio(sfxWaterSrc);
       sfx.volume = this._muted ? 0 : 0.7;
       sfx.play().catch(() => {});
