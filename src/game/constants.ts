@@ -39,8 +39,10 @@ export const POWER_DURATION = 5;
 export const POWER_SCORE_MULT = 2;
 export const POWER_SPEED_BOOST = 1.7;
 
-// 속도 증가율 (0.05 → 0.03 → 0.02)
-export const SPEED_RAMP = 0.02;
+// 속도 증가율 (0.05 → 0.03 → 0.02 → 0.025)
+export const SPEED_RAMP = 0.025;
+// 시작 기본 속도 (1.0 → 1.5: 공원 구간 너무 느린 문제 해결)
+export const SPEED_BASE = 1.5;
 
 // 거리 기본 배율 — 2.5m/s 기준으로 테마 구간을 빠르게 경험
 export const DISTANCE_SPEED = 2.5;
@@ -48,8 +50,8 @@ export const DISTANCE_SPEED = 2.5;
 // 달빛길 보너스 타이머 (초)
 export const MOONLIGHT_DURATION = 90;
 
-// 속도 제한 (5.0 → 3.5)
-export const SPEED_CAP = 3.5;
+// 속도 제한 (5.0 → 3.5 → 4.2)
+export const SPEED_CAP = 4.2;
 export const MOONLIGHT_SPEED = 2.0; // 달빛길 고정 속도 (여유롭게 즐기기)
 
 // 마일스톤 — 거리 배율에 맞게 조정

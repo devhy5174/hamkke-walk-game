@@ -50,8 +50,8 @@ MVP 완료 후 지속 기능 추가 중.
 
 속도 시스템
 
-- speedMult = 1 + aliveTime * SPEED_RAMP (0.03)
-- 최대 5배 캡 (SPEED_CAP) — 눈길 도달 시점에서 고정
+- speedMult = SPEED_BASE(1.5) + aliveTime * SPEED_RAMP (0.025)
+- 최대 4.2배 캡 (SPEED_CAP)
 - 달빛길은 2배 고정 (MOONLIGHT_SPEED) — 여유롭게 즐기기
 - 시계 아이템 달빛길에선 스폰 안 함
 

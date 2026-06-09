@@ -29,6 +29,7 @@ import {
   POWER_DURATION,
   POWER_SCORE_MULT,
   SPEED_RAMP,
+  SPEED_BASE,
   SPEED_CAP,
   MOONLIGHT_SPEED,
   MILESTONES,
@@ -501,7 +502,7 @@ export class GameEngine {
   private get speedMult(): number {
     if (this.isPracticeMode) return this.practiceSpeedMult;
     if (this.currentThemeId === "moonlight") return MOONLIGHT_SPEED;
-    return Math.min(1 + this.aliveTime * SPEED_RAMP, SPEED_CAP);
+    return Math.min(SPEED_BASE + this.aliveTime * SPEED_RAMP, SPEED_CAP);
   }
 
   private update(dtSec: number) {
