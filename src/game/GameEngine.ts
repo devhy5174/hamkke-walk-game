@@ -1146,8 +1146,8 @@ export class GameEngine {
       }
     }
 
-    // ── 땀방울 파티클 ──
-    for (const p of this.sweatParticles) {
+    // ── 땀방울 파티클 — 컷신 중엔 숨김 ──
+    if (!this.completionIntro.isActive) for (const p of this.sweatParticles) {
       ctx.save();
       ctx.globalAlpha = Math.max(0, p.life) * 0.9;
       ctx.translate(p.x, p.y);

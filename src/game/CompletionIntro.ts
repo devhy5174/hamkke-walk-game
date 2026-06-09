@@ -411,6 +411,15 @@ export class CompletionIntro {
       if (a <= 0) continue;
       ctx.save();
       ctx.globalAlpha = a;
+      // 밝은 배경(일반 게임 화면)에서만 흰 후광으로 대비 확보
+      if (this.fadeAlpha < 0.5) {
+        ctx.shadowColor = "#ffffff";
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(fp.x, fp.y, FP_RADIUS + 2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fill();
+      }
       ctx.shadowColor = "#FFD700";
       ctx.shadowBlur = fp.flash > 0 ? 50 : 24 + Math.sin(aliveTime * 3) * 8;
       ctx.drawImage(
