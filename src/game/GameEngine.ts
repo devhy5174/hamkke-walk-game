@@ -501,9 +501,9 @@ export class GameEngine {
             });
           }
           for (const p of this.snowTrail) p.yd += scrollDelta;
-          this.snowTrail = this.snowTrail.filter(
-            (p) => p.yd < this.canvas.height + 20,
-          );
+          for (let i = this.snowTrail.length - 1; i >= 0; i--) {
+            if (this.snowTrail[i].yd >= this.canvas.height + 20) this.snowTrail.splice(i, 1);
+          }
         }
       } else {
         // 일반 완주: 캐릭터 중앙으로 이동
@@ -684,9 +684,9 @@ export class GameEngine {
         });
       }
       for (const p of this.snowTrail) p.yd += scrollDelta;
-      this.snowTrail = this.snowTrail.filter(
-        (p) => p.yd < this.canvas.height + 20,
-      );
+      for (let i = this.snowTrail.length - 1; i >= 0; i--) {
+        if (this.snowTrail[i].yd >= this.canvas.height + 20) this.snowTrail.splice(i, 1);
+      }
     }
 
     // 거리 증가 + 거리 기반 점수 (완주 배너 중에는 고정)
@@ -847,23 +847,22 @@ export class GameEngine {
     const itemSpeed = WATER_BASE_SPEED * sm * boost * dtSec;
 
     // 발자국 이동 + 수집 (+10점, 파워모드 +20점)
-    this.footprints = this.footprints.filter((fp) => {
+    for (let i = this.footprints.length - 1; i >= 0; i--) {
+      const fp = this.footprints[i];
       fp.y += itemSpeed;
       if (hitFootprint(player, fp)) {
-        const isMoonlight =
-          getThemeByDistance(this.distanceMeters).id === "moonlight";
-        this.score +=
-          this.isPowerMode || isMoonlight
-            ? FOOTPRINT_SCORE * POWER_SCORE_MULT
-            : FOOTPRINT_SCORE;
-        this.emitUpdate(true); // 발자국 수집 즉각 반영
-        return false;
+        const isMoonlight = getThemeByDistance(this.distanceMeters).id === "moonlight";
+        this.score += this.isPowerMode || isMoonlight ? FOOTPRINT_SCORE * POWER_SCORE_MULT : FOOTPRINT_SCORE;
+        this.emitUpdate(true);
+        this.footprints.splice(i, 1);
+      } else if (fp.y >= this.canvas.height + fp.radius * 2) {
+        this.footprints.splice(i, 1);
       }
-      return fp.y < this.canvas.height + fp.radius * 2;
-    });
+    }
 
     // 물병 이동 + 수집 (게이지 충전, 점수 없음)
-    this.waterBottles = this.waterBottles.filter((item) => {
+    for (let i = this.waterBottles.length - 1; i >= 0; i--) {
+      const item = this.waterBottles[i];
       item.y += itemSpeed;
       if (hitWaterBottle(player, item)) {
         this.gaugeCount++;
@@ -876,23 +875,26 @@ export class GameEngine {
           const msgs = POWER_MESSAGES[tid] ?? POWER_MESSAGES["park"];
           this.onPowerMsg?.(msgs[Math.floor(Math.random() * msgs.length)]);
         }
-        this.emitUpdate(true); // 물병 수집·파워모드 발동 즉각 반영
-        return false;
+        this.emitUpdate(true);
+        this.waterBottles.splice(i, 1);
+      } else if (item.y >= this.canvas.height + item.radius * 2) {
+        this.waterBottles.splice(i, 1);
       }
-      return item.y < this.canvas.height + item.radius * 2;
-    });
+    }
 
     // 시계 아이템 이동 + 수집 → 슬로우 발동
-    this.clockItems = this.clockItems.filter((item) => {
+    for (let i = this.clockItems.length - 1; i >= 0; i--) {
+      const item = this.clockItems[i];
       item.y += itemSpeed;
       if (hitClockItem(player, item)) {
         this.isSlowMode = true;
         this.slowTimeLeft = SLOW_DURATION;
-        this.emitUpdate(true); // 슬로우 발동 즉각 반영
-        return false;
+        this.emitUpdate(true);
+        this.clockItems.splice(i, 1);
+      } else if (item.y >= this.canvas.height + item.radius * 2) {
+        this.clockItems.splice(i, 1);
       }
-      return item.y < this.canvas.height + item.radius * 2;
-    });
+    }
 
     // 장애물 이동 + 충돌 (파워모드 중 무적)
     const obsSpeed = OBSTACLE_BASE_SPEED * sm * boost * dtSec;
@@ -934,12 +936,12 @@ export class GameEngine {
       this.onGameOver();
       return;
     }
-    this.obstacles = this.obstacles.filter(
-      (obs) =>
-        obs.y < this.canvas.height + obs.height &&
-        obs.x > -obs.width - 80 &&
-        obs.x < this.canvas.width + 80,
-    );
+    for (let i = this.obstacles.length - 1; i >= 0; i--) {
+      const obs = this.obstacles[i];
+      if (obs.y >= this.canvas.height + obs.height || obs.x <= -obs.width - 80 || obs.x >= this.canvas.width + 80) {
+        this.obstacles.splice(i, 1);
+      }
+    }
 
     // 땀방울 파티클 (150m 이후, 빨라질수록 자주 생성)
     if (this.distanceMeters >= 150 && this.player) {
@@ -959,13 +961,14 @@ export class GameEngine {
           size: 3.5 + Math.random() * 2.5,
         });
       }
-      this.sweatParticles = this.sweatParticles.filter((p) => {
+      for (let i = this.sweatParticles.length - 1; i >= 0; i--) {
+        const p = this.sweatParticles[i];
         p.x += p.vx * dtSec;
         p.y += p.vy * dtSec;
-        p.vy += 55 * dtSec; // 살짝 중력
+        p.vy += 55 * dtSec;
         p.life -= 0.85 * dtSec;
-        return p.life > 0;
-      });
+        if (p.life <= 0) this.sweatParticles.splice(i, 1);
+      }
     }
   }
 
