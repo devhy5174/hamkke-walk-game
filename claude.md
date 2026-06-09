@@ -65,6 +65,22 @@ MVP 완료 후 지속 기능 추가 중.
 - 1500m 🎋 대나무: 돌맹이, 등산객 dodger / 사선 대나무 묶음 + 물방울
 - 2000m 🌙 달빛 (보너스): 장애물·시계 없음, 황금 발자국 +20점, 90초 타이머 / 나무 실루엣 + 별가루
 
+달빛길 진입 인트로 컷신 (CompletionIntro)
+
+- 2000m 도달 시 자동 시작, 게임 플레이와 완전히 분리된 컷신 클래스
+- 페이즈 순서: showfp → speech1wait → eatfp → walkoff → fadeout → darkfp → eatdarkfp → flashwhite → done
+- showfp: 캐릭터 앞에 황금 발자국 5개 하나씩 등장 → "어? 황금 발자국?!" 말풍선
+- eatfp: 캐릭터가 자동으로 위로 이동하며 발자국 수집
+- walkoff: 마지막 발자국 수집 후 캐릭터가 화면 위로 완전히 퇴장
+- fadeout: 화면이 검게 페이드 (1초)
+- darkfp: 검은 화면에서 캐릭터가 아래에서 올라오는 등장 (eatfp와 동일 속도) → 발자국 5개 → 달빛문 등장
+  - 달빛문 내부: 방사형 빛줄기 10개 + ✦ 반짝이 파티클 14개 + 외곽 발광
+- eatdarkfp: "발자국을 따라가보자!" 말풍선 → 유저가 상하좌우 이동으로 발자국 수집 후 문 진입
+  - 발자국 미수집 상태로 문 접근 시 힌트 말풍선 (4초 쿨다운)
+- flashwhite: 화이트 플래시 후 즉시 달빛길 테마 전환 + 완주 토스트 표시
+- 완주 토스트: "축하해요! 🎊 / 비밀 산책길을 발견했어요. 🌙" (3.5초 자동 소멸)
+- 인트로 중 말풍선 탭으로 즉시 진행, 없으면 자동 진행
+
 달빛길 완주 시스템
 
 - 90초 후 finishSequence 시작 → FINISHED 배너 + 황금 발자국 배경 이미지
@@ -72,6 +88,7 @@ MVP 완료 후 지속 기능 추가 중.
 - 달빛길 BGM(bgm_finished.mp3) 유지 → 완주 결과 확인 탭 시 종료
 - 완주 오버레이: 랭킹 등록 → 달빛길로 돌아가기 / 랭킹 후 메인으로 가기
 - showCompletionOverlay 별도 state로 분리 (gameEnded와 독립)
+- photoMode 중 파워모드 이펙트(불꽃·오브·비네트) 숨김
 
 살아있는 장애물 (dodger)
 
@@ -145,6 +162,7 @@ src/
 
 ├── game/
 │ ├── GameEngine.ts
+│ ├── CompletionIntro.ts # 달빛길 진입 컷신 (페이즈 기반 클래스)
 │ ├── constants.ts
 │ ├── types.ts
 │ ├── collision.ts
@@ -181,6 +199,8 @@ GameEngine.ts: 게임 루프 (update / render / requestAnimationFrame)
 themes.ts: 테마 정의 및 거리 구간
 
 themeRenderer.ts: 테마별 배경·장식 렌더링 (renderBackground / renderDecorations)
+
+CompletionIntro.ts: 달빛길 진입 컷신 — 페이즈 기반 상태 머신, GameEngine에서 update/render 호출
 
 ranking.ts: Firebase CRUD — 점수·거리 독립 갱신, 닉네임 중복 보호
 

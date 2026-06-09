@@ -43,7 +43,9 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
   const [isPaused, setIsPaused] = useState(false);
   const [isCompletionIntroActive, setIsCompletionIntroActive] = useState(false);
   const [showCompletionToast, setShowCompletionToast] = useState(false);
-  const completionToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completionToastTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [isPractice, setIsPractice] = useState(false);
   const [dodgerMsg, setDodgerMsg] = useState<string | null>(null);
   const dodgerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -156,14 +158,21 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       if (!isPracticeRef.current) unlockTheme(theme.id);
       if (theme.id === "moonlight") {
         audioManager.switchToMoonlightBGM();
-        if (completionToastTimer.current) clearTimeout(completionToastTimer.current);
+        if (completionToastTimer.current)
+          clearTimeout(completionToastTimer.current);
         setShowCompletionToast(true);
         completionToastTimer.current = setTimeout(() => {
           setShowCompletionToast(false);
           completionToastTimer.current = null;
         }, 3500);
-        setTimeout(() => handleDodger("믿을 수 없어! 달빛길까지 왔어요! 🌙🎊"), 4000);
-        setTimeout(() => handleDodger("황금 발자국을 밟으며 별빛 아래 달려요! ✨"), 6500);
+        setTimeout(
+          () => handleDodger("믿을 수 없어! 달빛길까지 왔어요! 🌙🎊"),
+          4000,
+        );
+        setTimeout(
+          () => handleDodger("황금 발자국을 밟으며 별빛 아래 달려요! ✨"),
+          5000,
+        );
       }
       if (themeToastTimer.current) clearTimeout(themeToastTimer.current);
       setActiveThemeToast(theme);
@@ -244,7 +253,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       setIsPractice(false);
       setIsPaused(false);
       setIsCompletionIntroActive(false);
-      if (completionToastTimer.current) clearTimeout(completionToastTimer.current);
+      if (completionToastTimer.current)
+        clearTimeout(completionToastTimer.current);
       setShowCompletionToast(false);
       setIsStarted(true);
       engineRef.current.start();
