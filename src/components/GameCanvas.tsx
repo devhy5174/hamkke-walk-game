@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { RefObject, MutableRefObject } from "react";
 import type { GameEngine } from "../game/GameEngine";
+import { audioManager } from "../utils/audio";
 
 interface Props {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -33,6 +34,7 @@ export function GameCanvas({ canvasRef, engineRef }: Props) {
 
     const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
+      audioManager.unlockAudio(); // iOS AudioContext 언락 + SFX 미리 디코딩
       if (engineRef.current) {
         engineRef.current.touchX = toCanvasX(e.touches[0].clientX);
         if (engineRef.current.isPracticeMode || engineRef.current.isCompletionIntroActive)
