@@ -621,17 +621,19 @@ export class GameEngine {
       );
     }
 
-    // 거리 증가 + 거리 기반 점수
-    const prevFloor = Math.floor(this.distanceMeters);
-    this.distanceMeters += sm * boost * DISTANCE_SPEED * dtSec;
-    let needsEmit = Math.floor(this.distanceMeters) !== prevFloor;
+    // 거리 증가 + 거리 기반 점수 (완주 배너 중에는 고정)
+    if (!this.finishSequence) {
+      const prevFloor = Math.floor(this.distanceMeters);
+      this.distanceMeters += sm * boost * DISTANCE_SPEED * dtSec;
+      let needsEmit = Math.floor(this.distanceMeters) !== prevFloor;
 
-    while (this.distanceMeters >= this.nextDistanceScore) {
-      this.score++;
-      this.nextDistanceScore += 10;
-      needsEmit = true;
+      while (this.distanceMeters >= this.nextDistanceScore) {
+        this.score++;
+        this.nextDistanceScore += 10;
+        needsEmit = true;
+      }
+      if (needsEmit) this.emitUpdate();
     }
-    if (needsEmit) this.emitUpdate();
 
     // 마일스톤 체크
     for (const m of MILESTONES) {

@@ -80,7 +80,10 @@ export async function getTopRankings(limit = 50): Promise<RankEntry[]> {
   snapshot.forEach(child => {
     entries.push({ id: child.key!, ...child.val() });
   });
-  return entries.sort((a, b) => b.score - a.score);
+  return entries.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
 }
 
 export async function getTopRankingsByDistance(limit = 50): Promise<RankEntry[]> {
@@ -92,7 +95,10 @@ export async function getTopRankingsByDistance(limit = 50): Promise<RankEntry[]>
   snapshot.forEach(child => {
     entries.push({ id: child.key!, ...child.val() });
   });
-  return entries.sort((a, b) => b.distanceMeters - a.distanceMeters);
+  return entries.sort((a, b) => {
+    if (b.distanceMeters !== a.distanceMeters) return b.distanceMeters - a.distanceMeters;
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
 }
 
 const NK_KEY = 'hamkke-walk-nickname';
