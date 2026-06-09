@@ -9,9 +9,17 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-// React 마운트 완료 후 스플래시 페이드 아웃
+// 스플래시 최소 1.2초 노출 후 페이드 아웃
 const splash = document.getElementById("splash");
 if (splash) {
-  splash.classList.add("hide");
-  setTimeout(() => splash.remove(), 380);
+  const mountedAt = performance.now();
+  const MIN_SHOW = 1200;
+  const doHide = () => {
+    splash.classList.add("hide");
+    setTimeout(() => splash.remove(), 380);
+  };
+  const elapsed = performance.now() - mountedAt;
+  const remaining = MIN_SHOW - elapsed;
+  if (remaining > 0) setTimeout(doHide, remaining);
+  else doHide();
 }
