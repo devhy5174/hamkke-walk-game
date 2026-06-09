@@ -245,6 +245,7 @@ export class GameEngine {
   private snowTrailIdx = 0; // 필터링 후에도 홀짝 패턴 유지용 단조 증가 카운터
 
   private running = false;
+  private lastEmitTime = 0; // emitUpdate 스로틀용
   private paused = false;
   private rafId = 0;
   private prevTime = 0;
@@ -433,7 +434,10 @@ export class GameEngine {
     return this.paused;
   }
 
-  private emitUpdate() {
+  private emitUpdate(force = false) {
+    const now = performance.now();
+    if (!force && now - this.lastEmitTime < 100) return;
+    this.lastEmitTime = now;
     this.onUpdate({
       score: this.score,
       gaugeCount: this.gaugeCount,
@@ -753,8 +757,9 @@ export class GameEngine {
         this.moonlightTimeLeft = MOONLIGHT_DURATION;
         this.moonlightMsgTimer = 8; // 첫 메시지 8초 후
       }
+      const prevMoonCeil = Math.ceil(this.moonlightTimeLeft);
       this.moonlightTimeLeft -= dtSec;
-      this.emitUpdate();
+      if (Math.ceil(this.moonlightTimeLeft) !== prevMoonCeil) this.emitUpdate();
 
       // 달빛길 전용 말풍선 — 8~12초 간격으로 랜덤 출력
       this.moonlightMsgTimer -= dtSec;
@@ -851,7 +856,7 @@ export class GameEngine {
           this.isPowerMode || isMoonlight
             ? FOOTPRINT_SCORE * POWER_SCORE_MULT
             : FOOTPRINT_SCORE;
-        this.emitUpdate();
+        this.emitUpdate(true); // 발자국 수집 즉각 반영
         return false;
       }
       return fp.y < this.canvas.height + fp.radius * 2;
@@ -871,7 +876,7 @@ export class GameEngine {
           const msgs = POWER_MESSAGES[tid] ?? POWER_MESSAGES["park"];
           this.onPowerMsg?.(msgs[Math.floor(Math.random() * msgs.length)]);
         }
-        this.emitUpdate();
+        this.emitUpdate(true); // 물병 수집·파워모드 발동 즉각 반영
         return false;
       }
       return item.y < this.canvas.height + item.radius * 2;
@@ -883,7 +888,7 @@ export class GameEngine {
       if (hitClockItem(player, item)) {
         this.isSlowMode = true;
         this.slowTimeLeft = SLOW_DURATION;
-        this.emitUpdate();
+        this.emitUpdate(true); // 슬로우 발동 즉각 반영
         return false;
       }
       return item.y < this.canvas.height + item.radius * 2;
