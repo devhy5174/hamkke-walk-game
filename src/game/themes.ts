@@ -127,7 +127,7 @@ export const THEMES: GameTheme[] = [
     id: "moonlight",
     emoji: "🌙",
     name: "달빛길",
-    minDistance: 2000, //TODO : 2000 거리수정
+    minDistance: 10, // TEST — 원복: 2000
     decoration: "stars",
     colors: {
       grassMain: "#0F0F2E",

@@ -48,6 +48,8 @@ import {
   hitObstacle,
 } from "./collision";
 import { type GameTheme, THEMES, getThemeByDistance } from "./themes";
+// 완주 인트로 — 달빛길 2000m 진입 컷신 (일반 게임 인트로와 무관)
+import { CompletionIntro, type CompletionIntroUpdateResult } from "./CompletionIntro";
 import { renderBackground, renderDecorations } from "./themeRenderer";
 import { audioManager } from "../utils/audio";
 
@@ -264,9 +266,21 @@ export class GameEngine {
   private finishSequence = false;
   private finishTimer = 0;
   private photoMode = false;
+  // 완주 인트로 인스턴스 — 달빛길 진입 컷신 전용
+  private readonly completionIntro = new CompletionIntro();
   private onFinishReady: (() => void) | null = null;
   setFinishReadyCallback(cb: () => void) {
     this.onFinishReady = cb;
+  }
+
+  /** 완주 인트로 말풍선 탭 시 다음으로 진행. 소비됐으면 true 반환. */
+  tapCompletionIntro(): boolean {
+    return this.completionIntro.advanceSpeech();
+  }
+
+  /** 완주 인트로(달빛길 진입 컷신) 진행 중 여부 */
+  get isCompletionIntroActive() {
+    return this.completionIntro.isActive;
   }
 
   touchX: number | null = null;
@@ -320,13 +334,15 @@ export class GameEngine {
   private onThemeChange: (theme: GameTheme) => void;
   private onDodger: ((msg: string) => void) | null = null;
   private onPowerMsg: ((msg: string) => void) | null = null;
+  private onCompletionIntroSpeech: ((msg: string | null) => void) | null = null;
+  private onCompletionIntroChange: ((active: boolean) => void) | null = null;
 
-  setDodgerCallback(cb: (msg: string) => void) {
-    this.onDodger = cb;
-  }
-  setPowerMsgCallback(cb: (msg: string) => void) {
-    this.onPowerMsg = cb;
-  }
+  setDodgerCallback(cb: (msg: string) => void) { this.onDodger = cb; }
+  setPowerMsgCallback(cb: (msg: string) => void) { this.onPowerMsg = cb; }
+  /** 완주 인트로 말풍선 콜백 — 타이머 없이 탭 전까지 유지 */
+  setCompletionIntroSpeechCallback(cb: (msg: string | null) => void) { this.onCompletionIntroSpeech = cb; }
+  /** 완주 인트로 시작/종료 알림 콜백 */
+  setCompletionIntroChangeCallback(cb: (active: boolean) => void) { this.onCompletionIntroChange = cb; }
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -382,6 +398,7 @@ export class GameEngine {
     this.practiceMsgTimer = 5;
     this.finishSequence = false;
     this.finishTimer = 0;
+    this.completionIntro.reset();
     this.running = true;
     this.prevTime = 0;
     this.rafId = requestAnimationFrame(this.tick);
@@ -506,13 +523,60 @@ export class GameEngine {
   }
 
   private update(dtSec: number) {
+    // 달빛길 진입 컷신 진행 중 — MoonlightIntro에 위임
+    if (this.completionIntro.isActive) {
+      this.aliveTime += dtSec;
+      const playerX = this.player ? this.player.x : 0;
+      const playerY = this.player ? this.player.y : this.canvas.height * 0.77;
+      const { scrollDelta, newPlayerY, newPlayerX, playerYDelta }: CompletionIntroUpdateResult =
+        this.completionIntro.update(dtSec, playerX, playerY);
+      this.scrollY = (this.scrollY + scrollDelta) % 60;
+      if (newPlayerY !== null && this.player) this.player.y = newPlayerY;
+      if (newPlayerX !== null && this.player) this.player.x = newPlayerX;
+      // eatfp: 캐릭터 자동 위로 이동 / walkoff: 화면 밖까지 클램프 없이 이동
+      if (playerYDelta !== 0 && this.player) {
+        const minY = this.completionIntro.isWalkoffPhase
+          ? -(PLAYER_HEIGHT + 10)
+          : this.canvas.height * 0.05;
+        this.player.y = Math.max(minY, this.player.y + playerYDelta);
+      }
+
+      // eatdarkfp: 플레이어 상하좌우 이동
+      if (this.completionIntro.isPlayerControlEnabled && this.player) {
+        const { width } = this.canvas;
+        const pathLeft  = width * ROAD_L;
+        const pathRight = width * ROAD_R;
+        if (this.touchX !== null) {
+          const target  = Math.max(pathLeft, Math.min(this.touchX - this.player.width / 2, pathRight - this.player.width));
+          const delta   = target - this.player.x;
+          const maxStep = PLAYER_SPEED * 1.8 * dtSec;
+          this.player.x += Math.sign(delta) * Math.min(Math.abs(delta), maxStep);
+        } else if (this.moveDx !== 0) {
+          this.player.x += this.moveDx * PLAYER_SPEED * dtSec;
+          this.player.x  = Math.max(pathLeft, Math.min(this.player.x, pathRight - this.player.width));
+        }
+        const yMin = this.canvas.height * 0.12;
+        const yMax = this.canvas.height * 0.88;
+        if (this.touchY !== null) {
+          const targetY = Math.max(yMin, Math.min(this.touchY - this.player.height / 2, yMax));
+          const dy = targetY - this.player.y;
+          const maxStep = PLAYER_SPEED * 1.8 * dtSec;
+          this.player.y += Math.sign(dy) * Math.min(Math.abs(dy), maxStep);
+        } else if (this.moveDy !== 0) {
+          this.player.y += this.moveDy * PLAYER_SPEED * dtSec;
+          this.player.y = Math.max(yMin, Math.min(this.player.y, yMax));
+        }
+      }
+      return;
+    }
+
     this.aliveTime += dtSec;
     const { width } = this.canvas;
     const sm = this.speedMult;
     // 파워모드 > 슬로우 우선순위 (동시에 발동 시 파워모드 적용)
-    // B방식: 파워=min(×1.7, +1.2) / 시계=max(1.0, sm-1.2) → 고속에서 균형 유지
+    // B방식: 파워=min(×1.7, +1.2) / 시계=현재속도×0.7 (30% 감소, 테마 무관 균일)
     const powerBoost  = Math.min(POWER_SPEED_BOOST, 1 + 1.2 / sm);
-    const slowSpeed   = Math.max(1.0, sm - 1.2);
+    const slowSpeed   = sm * 0.7;
     const slowBoost   = slowSpeed / sm;
     // 시계 종료 페이드인: slowBoost → 1.0
     const slowEaseFactor =
@@ -649,6 +713,26 @@ export class GameEngine {
     // 테마 변경 감지
     const newTheme = getThemeByDistance(this.distanceMeters);
     if (newTheme.id !== this.currentThemeId) {
+      if (newTheme.id === 'moonlight' && !this.isPracticeMode) {
+        // 달빛길 진입 → 즉시 전환 대신 컷신 시작
+        this.obstacles = [];
+        this.footprints = [];
+        this.waterBottles = [];
+        this.clockItems = [];
+        const cx = this.player ? this.player.x + this.player.width / 2 : this.canvas.width / 2;
+        const py = this.player ? this.player.y : this.canvas.height * 0.77;
+        this.onCompletionIntroChange?.(true);
+        this.completionIntro.start(cx, py, this.canvas.width, this.canvas.height, {
+          onSpeech: (msg) => this.onCompletionIntroSpeech?.(msg),
+          onVisualSwitch: () => { this.currentThemeId = 'moonlight'; },
+          onThemeSwitch: () => {
+            this.currentThemeId = 'moonlight';
+            this.onCompletionIntroChange?.(false);
+            this.onThemeChange(THEMES.find(t => t.id === 'moonlight')!);
+          },
+        });
+        return;
+      }
       this.currentThemeId = newTheme.id;
       if (newTheme.id === "moonlight") this.obstacles = [];
       this.onThemeChange(newTheme);
@@ -885,7 +969,8 @@ export class GameEngine {
     const { width, height } = canvas;
     const pathLeft = width * ROAD_L;
     const pathWidth = width * (ROAD_R - ROAD_L);
-    const theme = getThemeByDistance(this.distanceMeters);
+    // currentThemeId 기준으로 테마를 결정 — 인트로 중 달빛길 배경이 미리 보이는 현상 방지
+    const theme = THEMES.find(t => t.id === this.currentThemeId) ?? THEMES[0];
     const rc = {
       ctx,
       width,
@@ -943,11 +1028,17 @@ export class GameEngine {
     }
 
     // ── 파워모드 불꽃 효과 (플레이어 뒤) ──
-    if (this.isPowerMode) {
+    if (this.isPowerMode && !this.photoMode) {
       this.drawFlameEffect();
     }
 
-    // ── 플레이어 (원형 캐릭터 이미지) ──
+    // ── 달빛길 인트로 오버레이 (캐릭터 앞에 그려 캐릭터가 검은 배경 위에 보이게) ──
+    if (this.completionIntro.isActive) {
+      this.completionIntro.render(ctx, width, height, this.aliveTime, this.getGoldenFootprint());
+    }
+
+    // ── 플레이어 (원형 캐릭터 이미지) — fadeout/darkfp 등 검은 화면 구간엔 숨김 ──
+    if (!(this.completionIntro.isActive && this.completionIntro.isPlayerHidden)) {
     const { player: p } = this;
     const bob = this.running ? Math.sin(this.aliveTime * 10) * 2.5 : 0;
     const r = ((p.height + 8) / 2) * 1.13; // 13% 크기 증가
@@ -990,9 +1081,10 @@ export class GameEngine {
       ctx.fillText("🚶", cx, p.y + bob - 4);
       ctx.restore();
     }
+    } // isPlayerHidden 가드 끝
 
     // ── 파워모드 캔버스 비네트 ──
-    if (this.isPowerMode) {
+    if (this.isPowerMode && !this.photoMode) {
       const { width, height } = canvas;
       const t = this.aliveTime;
       const pulse = 0.18 + Math.sin(t * 5) * 0.06;
@@ -1087,6 +1179,7 @@ export class GameEngine {
     if (this.finishSequence || this.photoMode) {
       this.drawFinishBanner();
     }
+
   }
 
   private drawFinishBanner() {

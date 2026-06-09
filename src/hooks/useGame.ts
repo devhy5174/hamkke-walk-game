@@ -41,6 +41,9 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     null,
   );
   const [isPaused, setIsPaused] = useState(false);
+  const [isCompletionIntroActive, setIsCompletionIntroActive] = useState(false);
+  const [showCompletionToast, setShowCompletionToast] = useState(false);
+  const completionToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPractice, setIsPractice] = useState(false);
   const [dodgerMsg, setDodgerMsg] = useState<string | null>(null);
   const dodgerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,8 +67,9 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     const handleVisibility = () => {
       if (document.hidden) pauseGame();
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
   }, [pauseGame]);
 
   const handleUpdate = useCallback((stats: GameStats) => {
@@ -140,20 +144,26 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     }, 2500);
   }, []);
 
+  // 인트로 말풍선 — 탭 전까지 유지, 타이머 없음
+  const handleCompletionIntroSpeech = useCallback((msg: string | null) => {
+    if (dodgerTimer.current) clearTimeout(dodgerTimer.current);
+    setDodgerMsg(msg);
+  }, []);
+
   const handleThemeChange = useCallback(
     (theme: GameTheme) => {
       setCurrentTheme(theme);
       if (!isPracticeRef.current) unlockTheme(theme.id);
       if (theme.id === "moonlight") {
         audioManager.switchToMoonlightBGM();
-        setTimeout(
-          () => handleDodger("믿을 수 없어! 달빛길까지 왔어요! 🌙🎊"),
-          800,
-        );
-        setTimeout(
-          () => handleDodger("황금 발자국을 밟으며 별빛 아래 달려요! ✨"),
-          4000,
-        );
+        if (completionToastTimer.current) clearTimeout(completionToastTimer.current);
+        setShowCompletionToast(true);
+        completionToastTimer.current = setTimeout(() => {
+          setShowCompletionToast(false);
+          completionToastTimer.current = null;
+        }, 3500);
+        setTimeout(() => handleDodger("믿을 수 없어! 달빛길까지 왔어요! 🌙🎊"), 4000);
+        setTimeout(() => handleDodger("황금 발자국을 밟으며 별빛 아래 달려요! ✨"), 6500);
       }
       if (themeToastTimer.current) clearTimeout(themeToastTimer.current);
       setActiveThemeToast(theme);
@@ -193,6 +203,16 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       if (charSrc) engineRef.current.setCharacter(charSrc);
       engineRef.current.setDodgerCallback(handleDodger);
       engineRef.current.setPowerMsgCallback(handleDodger);
+      engineRef.current.setCompletionIntroSpeechCallback(
+        handleCompletionIntroSpeech,
+      );
+      engineRef.current.setCompletionIntroChangeCallback((active) => {
+        setIsCompletionIntroActive(active);
+        if (!active) {
+          if (dodgerTimer.current) clearTimeout(dodgerTimer.current);
+          setDodgerMsg(null);
+        }
+      });
       engineRef.current.setFinishReadyCallback(() => {
         setIsPhotoMode(true);
         setIsComplete(true);
@@ -223,6 +243,9 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       isPracticeRef.current = false;
       setIsPractice(false);
       setIsPaused(false);
+      setIsCompletionIntroActive(false);
+      if (completionToastTimer.current) clearTimeout(completionToastTimer.current);
+      setShowCompletionToast(false);
       setIsStarted(true);
       engineRef.current.start();
       audioManager.playBGM();
@@ -268,10 +291,16 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
       engineRef.current.isPracticeMode = true;
       engineRef.current.setDodgerCallback(handleDodger);
       engineRef.current.setPowerMsgCallback(handleDodger);
-      if (theme.id === 'moonlight') {
+      if (theme.id === "moonlight") {
         engineRef.current.setFinishReadyCallback(() => {
           setIsPhotoMode(true);
-          setTimeout(() => setPhotoMsg("달빛길 산책 완주! 🌙✨\n나가기를 눌러 도감으로 돌아가요"), 1000);
+          setTimeout(
+            () =>
+              setPhotoMsg(
+                "달빛길 산책 완주! 🌙✨\n나가기를 눌러 도감으로 돌아가요",
+              ),
+            1000,
+          );
         });
       }
 
@@ -300,13 +329,20 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
 
       engineRef.current.start(theme.minDistance);
 
-      if (theme.id === 'moonlight') {
+      if (theme.id === "moonlight") {
         audioManager.switchToMoonlightBGM();
       } else {
         audioManager.playBGM();
       }
     },
-    [canvasRef, handleUpdate, handleGameOver, handleMilestone, handleThemeChange, handleDodger],
+    [
+      canvasRef,
+      handleUpdate,
+      handleGameOver,
+      handleMilestone,
+      handleThemeChange,
+      handleDodger,
+    ],
   );
 
   const exitPractice = useCallback(() => {
@@ -346,6 +382,8 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     confirmComplete,
     backToPhotoMode,
     engineRef,
+    isCompletionIntroActive,
+    showCompletionToast,
     isComplete,
     isPhotoMode,
     showCompletionOverlay,

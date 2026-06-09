@@ -51,6 +51,8 @@ function App() {
     confirmComplete,
     backToPhotoMode,
     engineRef,
+    isCompletionIntroActive,
+    showCompletionToast,
     isComplete,
     isPhotoMode,
     showCompletionOverlay,
@@ -130,7 +132,7 @@ function App() {
       <div className="app">
         <GameCanvas canvasRef={canvasRef} engineRef={engineRef} />
 
-        {isStarted && !isPractice && (
+        {isStarted && !isPractice && !isCompletionIntroActive && (
           <GameHUD
             score={score}
             bestScore={bestScore}
@@ -152,7 +154,7 @@ function App() {
             engineRef={engineRef}
             canvasRef={canvasRef}
             multiline={isPhotoMode}
-            persistent={isPhotoMode}
+            persistent={isPhotoMode || isCompletionIntroActive}
             editable={isPhotoMode && isPractice}
             onEdit={setPhotoCaption}
           />
@@ -161,6 +163,14 @@ function App() {
           <MilestoneToast milestone={activeMilestone} />
         )}
         {isStarted && <ThemeToast theme={activeThemeToast} />}
+        {isStarted && showCompletionToast && (
+          <div className="completion-toast">
+            <div className="completion-toast-main">축하해요! 🎊</div>
+            <div className="completion-toast-sub">
+              비밀 산책길을 발견했어요. 🌙
+            </div>
+          </div>
+        )}
         {isStarted && !isPhotoMode && (
           <PowerOverlay
             isPowerMode={isPowerMode}

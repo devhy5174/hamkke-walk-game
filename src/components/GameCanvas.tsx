@@ -35,7 +35,7 @@ export function GameCanvas({ canvasRef, engineRef }: Props) {
       e.preventDefault();
       if (engineRef.current) {
         engineRef.current.touchX = toCanvasX(e.touches[0].clientX);
-        if (engineRef.current.isPracticeMode)
+        if (engineRef.current.isPracticeMode || engineRef.current.isCompletionIntroActive)
           engineRef.current.touchY = toCanvasY(e.touches[0].clientY);
       }
     };
@@ -43,15 +43,15 @@ export function GameCanvas({ canvasRef, engineRef }: Props) {
       e.preventDefault();
       if (engineRef.current) {
         engineRef.current.touchX = toCanvasX(e.touches[0].clientX);
-        if (engineRef.current.isPracticeMode)
+        if (engineRef.current.isPracticeMode || engineRef.current.isCompletionIntroActive)
           engineRef.current.touchY = toCanvasY(e.touches[0].clientY);
       }
     };
     const onTouchEnd = () => {
-      if (engineRef.current) {
-        engineRef.current.touchX = null;
-        engineRef.current.touchY = null;
-      }
+      if (!engineRef.current) return;
+      engineRef.current.tapCompletionIntro();
+      engineRef.current.touchX = null;
+      engineRef.current.touchY = null;
     };
 
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
