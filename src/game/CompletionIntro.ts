@@ -363,12 +363,17 @@ export class CompletionIntro {
     }));
   }
 
-  /** darkfp 단계 전환 시 호출 — 캔버스 중앙 기준 playerStartY 앞 열에 발자국 배치 */
+  /** darkfp 단계 전환 시 호출 — playerStartY 에서 달빛문 바로 앞까지 균등 배치 */
   private initDarkFootprints() {
     const cx = this.canvasW / 2;
+    const firstFpY = this.playerStartY - SHOW_FP_Y_OFFSET;
+    // 달빛문 구조: archY = doorY + 36, pillarH = 70 → 문 입구 안쪽 하단 근처
+    const doorY   = this.canvasH * DOOR_Y_RATIO;
+    const lastFpY = doorY + 36 + 55; // 문 기둥 안쪽 하단
+    const gap     = (firstFpY - lastFpY) / (FP_COUNT - 1);
     this.fps = Array.from({ length: FP_COUNT }, (_, i) => ({
       x: cx + SHOW_FP_X_OFFSETS[i],
-      y: this.playerStartY - SHOW_FP_Y_OFFSET - i * 48, // 간격 좁혀서 달빛문과 겹침 방지
+      y: firstFpY - i * gap,
       alpha: 0,
       eaten: false,
       flash: 0,
