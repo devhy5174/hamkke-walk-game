@@ -1,4 +1,4 @@
-package com.hamkkewalk.game;
+package com.hamkkewalk.app;
 
 import com.getcapacitor.BridgeActivity;
 

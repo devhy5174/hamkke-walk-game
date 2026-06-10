@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.hamkkewalk.game',
+  appId: 'com.hamkkewalk.app',
   appName: '산책길 모험',
   webDir: 'dist',
   server: {
