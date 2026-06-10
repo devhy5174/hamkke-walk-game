@@ -63,6 +63,21 @@ function MainView({
         </button>
       </div>
 
+      {/* 지원 */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={sectionLabel}>지원</div>
+        <button
+          style={{ ...menuRow, borderRadius: 16 }}
+          onClick={() => {
+            window.location.href =
+              "mailto:devhy5174@gmail.com?subject=%EC%82%B0%EC%B1%85%EA%B8%B8%20%EB%AA%A8%ED%97%98%20%EB%AC%B8%EC%9D%98&body=%EB%AC%B8%EC%9D%98%20%EB%82%B4%EC%9A%A9%EC%9D%84%20%EC%9E%85%EB%A0%A5%ED%95%B4%EC%A3%BC%EC%84%B8%EC%9A%94.";
+          }}
+        >
+          <span style={menuText}>문의하기</span>
+          <span style={chevron}>›</span>
+        </button>
+      </div>
+
       {/* 법적 */}
       <div style={{ marginBottom: 22 }}>
         <div style={sectionLabel}>정보</div>

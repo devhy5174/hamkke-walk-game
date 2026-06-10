@@ -91,6 +91,7 @@ import obsCheRock from "../assets/images/obstacles/obs-cherry-rock.png";
 import obsSnoRock from "../assets/images/obstacles/obs-snow-rock.png";
 import obsMtnRock from "../assets/images/obstacles/obs-mountain-rock.png";
 
+
 // 파워워커 발동 시 테마별 말풍선 메시지
 const PRACTICE_MESSAGES: Record<string, string[]> = {
   park: [
@@ -1582,19 +1583,22 @@ export class GameEngine {
           ctx.globalAlpha = Math.max(0, alpha);
           const text = messages[msgIdx];
           ctx.font = "bold 13px sans-serif";
-          // 이모지 너비 측정 오차 보정: 패딩 넉넉하게
-          const tw = ctx.measureText(text).width + 16;
-          const bx = cx - tw / 2 - 10;
+          const boxW = ctx.measureText(text).width + 36;
+          const margin = 6;
+          // 등산객이 가장자리로 피할 때 말풍선이 캔버스 밖으로 나가지 않도록 클램핑
+          const rawBx = cx - boxW / 2;
+          const bx = Math.max(margin, Math.min(rawBx, this.canvas.width - boxW - margin));
+          const textX = bx + boxW / 2;
           const by = y - 46 - rise;
           ctx.fillStyle = "#fff";
           ctx.strokeStyle = "rgba(0,0,0,0.1)";
           ctx.lineWidth = 1;
           ctx.beginPath();
-          rrect(ctx, bx, by, tw + 20, 26, 12);
+          rrect(ctx, bx, by, boxW, 26, 12);
           ctx.fill();
           ctx.stroke();
           ctx.fillStyle = "#2D7D52";
-          ctx.fillText(text, cx, by + 17);
+          ctx.fillText(text, textX, by + 17);
         }
       } else if (elapsed < 0.8) {
         // 다람쥐: "!" 표시
