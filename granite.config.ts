@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: "산책길 모험",
     primaryColor: "#3B82F6",
-    icon: "public/app_logo.png",
+    icon: "https://static.toss.im/appsintoss/30605/1d03e4d5-fe38-40ca-b4f1-74403c565f2f.png",
   },
   web: {
     host: "localhost",
