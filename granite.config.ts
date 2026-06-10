@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: "산책길 모험",
     primaryColor: "#3B82F6",
-    icon: "src/assets/images/app_logo.png",
+    icon: "public/app_logo.png",
   },
   web: {
     host: "localhost",
