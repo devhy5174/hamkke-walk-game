@@ -355,6 +355,12 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     ],
   );
 
+  const reviveGame = useCallback(() => {
+    engineRef.current?.revive();
+    setGameEnded(false);
+    audioManager.playBGM();
+  }, []);
+
   const exitPractice = useCallback(() => {
     engineRef.current?.stop();
     audioManager.stopBGM();
@@ -386,6 +392,7 @@ export function useGame(canvasRef: RefObject<HTMLCanvasElement | null>) {
     activeThemeToast,
     dodgerMsg,
     startGame,
+    reviveGame,
     pauseGame,
     resumeGame,
     showResult,

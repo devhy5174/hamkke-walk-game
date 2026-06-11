@@ -451,7 +451,7 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
 
 const backdrop: CSSProperties = {
   position: "absolute",
-  inset: 0,
+  top: 0, left: 0, right: 0, bottom: 60,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

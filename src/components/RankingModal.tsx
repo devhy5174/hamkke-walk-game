@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { upsertRanking, getTopRankings, getTopRankingsByDistance, getSavedNickname, persistNickname } from '../utils/ranking';
 import type { RankEntry } from '../utils/ranking';
-import { hasProfanity } from '../utils/profanity';
+import { hasProfanity, isValidNickname } from '../utils/profanity';
 
 type Step = 'input' | 'loading' | 'done';
 type Tab = 'score' | 'distance';
@@ -40,6 +40,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
     const trimmed = nickname.trim();
     if (!trimmed) { setError('닉네임을 입력해주세요'); return; }
     if (trimmed.length > 10) { setError('10자 이하로 입력해주세요'); return; }
+    if (!isValidNickname(trimmed)) { setError('한글·영문·숫자를 포함해주세요 🙅'); return; }
 
     // 욕설 체크 (빠른 클라이언트 검증)
     if (hasProfanity(trimmed)) {
@@ -219,7 +220,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
 // ── 스타일 ──────────────────────────────────────────────────────────────────
 
 const backdrop: CSSProperties = {
-  position: 'absolute', inset: 0,
+  position: 'absolute', top: 0, left: 0, right: 0, bottom: 60,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   background: 'rgba(200,235,218,0.55)',
   backdropFilter: 'blur(6px)',

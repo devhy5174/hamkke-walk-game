@@ -22,3 +22,9 @@ export function hasProfanity(text: string): boolean {
   const normalized = text.toLowerCase().replace(/\s/g, '');
   return BAD_WORDS.some(word => normalized.includes(word.toLowerCase()));
 }
+
+// 한글 완성자(가-힣), 영문자, 숫자 중 하나 이상 포함해야 유효
+// 초성(ㄱ-ㅎ)·모음(ㅏ-ㅣ)만 있는 닉네임 차단
+export function isValidNickname(text: string): boolean {
+  return /[가-힣a-zA-Z0-9]/.test(text);
+}

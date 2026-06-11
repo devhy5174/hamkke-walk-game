@@ -248,6 +248,7 @@ export class GameEngine {
   private running = false;
   private lastEmitTime = 0; // emitUpdate 스로틀용
   private paused = false;
+  private invincibleTime = 0; // 부활 후 무적 시간 (초)
   private rafId = 0;
   private prevTime = 0;
   private footprintTimer = 0;
@@ -401,6 +402,7 @@ export class GameEngine {
     this.finishSequence = false;
     this.finishTimer = 0;
     this.completionIntro.reset();
+    this.invincibleTime = 0;
     this.running = true;
     this.prevTime = 0;
     this.rafId = requestAnimationFrame(this.tick);
@@ -414,6 +416,14 @@ export class GameEngine {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
     }
+  }
+
+  revive() {
+    this.obstacles = []; // 장애물 제거 (즉사 방지)
+    this.invincibleTime = 3; // 3초 무적
+    this.running = true;
+    this.prevTime = 0;
+    this.rafId = requestAnimationFrame(this.tick);
   }
 
   pause(): boolean {
@@ -927,9 +937,14 @@ export class GameEngine {
       }
     }
 
+    if (this.invincibleTime > 0) {
+      this.invincibleTime = Math.max(0, this.invincibleTime - dtSec);
+    }
+
     if (
       !this.isPowerMode &&
       !this.isPracticeMode &&
+      this.invincibleTime <= 0 &&
       this.obstacles.some((obs) => hitObstacle(player, obs))
     ) {
       this.running = false;

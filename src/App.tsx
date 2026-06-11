@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { HiSpeakerWave, HiSpeakerXMark } from "react-icons/hi2";
 import { IoPauseCircle, IoHelpCircle } from "react-icons/io5";
 import { useGame } from "./hooks/useGame";
@@ -21,6 +21,7 @@ import {
 } from "./components/PracticeThemeBanner";
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
 import { audioManager } from "./utils/audio";
+import { showAdBanner, hideAdBanner, showRewardedAd, BannerAdPosition } from "./utils/admob";
 import "./App.css";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
     activeThemeToast,
     dodgerMsg,
     startGame,
+    reviveGame,
     isPaused,
     isPractice,
     startPractice,
@@ -84,6 +86,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [rankingDone, setRankingDone] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState(getSavedCharId());
+  const [reviveUsed, setReviveUsed] = useState(false);
+  const [reviveLoading, setReviveLoading] = useState(false);
+  const [reviveCountdown, setReviveCountdown] = useState<number | null>(null);
 
   const selectedChar =
     CHARACTERS.find((c) => c.id === selectedCharId) ?? CHARACTERS[0];
@@ -115,12 +120,57 @@ function App() {
   };
 
   const handleStart = () => {
+    setReviveUsed(false);
     startGame(selectedChar.src);
   };
 
   const handleRestart = () => {
+    setReviveUsed(false);
     startGame(selectedChar.src);
   };
+
+  const handleRevive = async () => {
+    setReviveLoading(true);
+    const rewarded = await showRewardedAd();
+    setReviveLoading(false);
+    if (!rewarded) return;
+
+    setReviveUsed(true);
+    // 카운트다운 후 부활
+    let n = 3;
+    setReviveCountdown(n);
+    const step = () => {
+      n -= 1;
+      if (n > 0) {
+        setReviveCountdown(n);
+        setTimeout(step, 1000);
+      } else {
+        setReviveCountdown(null);
+        reviveGame();
+      }
+    };
+    setTimeout(step, 1000);
+  };
+
+  // ─── AdMob 배너 제어 ────────────────────────────────────────────
+  // 홈화면(모달 포함): 배너 하단 고정
+  // 게임 중: 배너 숨김
+  const adShownRef = useRef(false);
+
+  useEffect(() => {
+    if (isStarted) {
+      if (adShownRef.current) {
+        hideAdBanner().catch(() => {});
+        adShownRef.current = false;
+      }
+    } else {
+      if (!adShownRef.current) {
+        adShownRef.current = true;
+        showAdBanner(BannerAdPosition.BOTTOM_CENTER).catch(() => {});
+      }
+    }
+  }, [isStarted]);
+  // ────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -239,6 +289,13 @@ function App() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* 광고 슬롯 — 홈화면·팝업 모두에서 하단 고정 표시 */}
+        {!isStarted && (
+          <div className="ad-banner-slot" style={{ zIndex: 25 }}>
+            <span className="ad-banner-slot-label">광고</span>
           </div>
         )}
 
@@ -407,18 +464,38 @@ function App() {
           </div>
         )}
 
-        {/* 게임 종료 오버레이 — 화면 보다가 탭하면 결과 팝업 */}
-        {gameEnded && !isComplete && !gameOver && (
+        {/* 부활 카운트다운 오버레이 */}
+        {reviveCountdown !== null && (
           <div
-            onClick={showResult}
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.6)",
+              backdropFilter: "blur(6px)",
+              zIndex: 40,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div key={reviveCountdown} className="pause-countdown">
+              {reviveCountdown}
+            </div>
+          </div>
+        )}
+
+        {/* 게임 종료 오버레이 — 부활 or 결과 확인 */}
+        {gameEnded && !isComplete && !gameOver && reviveCountdown === null && (
+          <div
             style={{
               position: "absolute",
               inset: 0,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(0,0,0,0.32)",
-              backdropFilter: "blur(2px)",
+              background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(3px)",
               zIndex: 30,
             }}
           >
@@ -426,28 +503,63 @@ function App() {
               style={{
                 textAlign: "center",
                 color: "#fff",
-                padding: "28px 36px",
-                borderRadius: 24,
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.22)",
+                padding: "28px 28px 24px",
+                borderRadius: 28,
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                width: "82%",
+                maxWidth: 300,
               }}
             >
               <div style={{ fontSize: "2.4rem", marginBottom: 8 }}>🌿</div>
-              <div
-                style={{
-                  fontSize: "1.35rem",
-                  fontWeight: 800,
-                  marginBottom: 6,
-                  letterSpacing: -0.3,
-                }}
-              >
+              <div style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: 4, letterSpacing: -0.3 }}>
                 오늘도 잘 걸었어요!
               </div>
-              <div
-                style={{ fontSize: "0.85rem", opacity: 0.75, fontWeight: 500 }}
-              >
-                탭해서 결과 확인
+              <div style={{ fontSize: "0.82rem", opacity: 0.7, marginBottom: 20 }}>
+                {distanceMeters}m · {score.toLocaleString()}점
               </div>
+
+              {/* 부활 버튼 — 판당 1회 */}
+              {!reviveUsed && (
+                <button
+                  onClick={reviveLoading ? undefined : handleRevive}
+                  style={{
+                    width: "100%",
+                    padding: "14px 0",
+                    marginBottom: 10,
+                    background: reviveLoading
+                      ? "rgba(255,255,255,0.15)"
+                      : "linear-gradient(135deg, #3DAE79, #2D9065)",
+                    border: "none",
+                    borderRadius: 50,
+                    fontSize: "0.95rem",
+                    fontWeight: 800,
+                    color: "#fff",
+                    cursor: reviveLoading ? "default" : "pointer",
+                    boxShadow: reviveLoading ? "none" : "0 4px 16px rgba(61,174,121,0.4)",
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {reviveLoading ? "광고 로딩 중..." : "📺 광고 보고 부활하기"}
+                </button>
+              )}
+
+              <button
+                onClick={showResult}
+                style={{
+                  width: "100%",
+                  padding: "11px 0",
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  borderRadius: 50,
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.8)",
+                  cursor: "pointer",
+                }}
+              >
+                결과 확인하기
+              </button>
             </div>
           </div>
         )}

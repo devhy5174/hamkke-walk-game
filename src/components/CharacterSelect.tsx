@@ -34,13 +34,14 @@ export function CharacterSelect({ selected, onSelect }: Props) {
 }
 
 const wrap: CSSProperties = {
-  margin: '10px 0',
+  margin: '6px 0',
 };
 
 const grid: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 10,
+  gap: 8,
+  justifyItems: 'center',
 };
 
 const itemBtn: CSSProperties = {
@@ -53,6 +54,8 @@ const itemBtn: CSSProperties = {
 };
 
 const imgWrap: CSSProperties = {
+  width: 72,
+  height: 72,
   borderRadius: '50%',
   overflow: 'hidden',
   transition: 'outline 0.15s, box-shadow 0.15s',

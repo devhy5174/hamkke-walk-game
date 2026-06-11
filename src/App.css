@@ -7,24 +7,42 @@
 /* ── 시작 화면 오버레이 ── */
 .overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px; /* 광고 슬롯 공간 확보 */
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 10px;
   background: rgba(220, 242, 232, 0.72);
   backdrop-filter: blur(4px);
 }
 
 .start-card {
   background: #fff;
-  border-radius: 28px;
-  padding: 28px 24px 24px;
+  border-radius: 20px;
+  padding: 18px 18px 20px;
   text-align: center;
-  box-shadow: 0 8px 40px rgba(61, 174, 121, 0.15);
-  max-width: 340px;
-  width: 90%;
-  max-height: 92dvh;
+  box-shadow: 0 4px 24px rgba(61, 174, 121, 0.12);
+  width: 100%;
+  max-height: calc(100dvh - 80px);
   overflow-y: auto;
+}
+
+/* ── 광고 슬롯 (네이티브 배너 영역 예약) ── */
+.ad-banner-slot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: transparent;
+  z-index: 5;
+}
+
+.ad-banner-slot-label {
+  display: none;
 }
 
 .game-title {
@@ -45,11 +63,11 @@
 .hint-row {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-bottom: 18px;
+  gap: 4px;
+  margin-bottom: 14px;
   background: #F0FAF5;
   border-radius: 14px;
-  padding: 12px 15px;
+  padding: 10px 15px;
 }
 
 .hint {
