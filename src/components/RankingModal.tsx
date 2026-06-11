@@ -12,11 +12,12 @@ interface Props {
   distanceMeters?: number;
   viewOnly?: boolean;
   onClose: () => void;
+  bottomOffset?: number;
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, onClose }: Props) {
+export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, onClose, bottomOffset = 60 }: Props) {
   const [step, setStep] = useState<Step>(viewOnly ? 'loading' : 'input');
   const [tab, setTab] = useState<Tab>('score');
 
@@ -75,7 +76,7 @@ export function RankingModal({ score = 0, distanceMeters = 0, viewOnly = false, 
   };
 
   return (
-    <div style={backdrop}>
+    <div style={{ ...backdrop, bottom: bottomOffset }}>
       <div style={card}>
 
         {/* ── 닉네임 입력 ── */}

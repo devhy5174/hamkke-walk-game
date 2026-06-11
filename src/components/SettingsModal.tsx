@@ -7,15 +7,16 @@ interface Props {
   onClose: () => void;
   isMuted: boolean;
   onToggleMute: () => void;
+  bottomOffset?: number;
 }
 
 type View = "main" | "privacy" | "terms";
 
-export function SettingsModal({ onClose, isMuted, onToggleMute }: Props) {
+export function SettingsModal({ onClose, isMuted, onToggleMute, bottomOffset = 60 }: Props) {
   const [view, setView] = useState<View>("main");
 
   return (
-    <div style={backdrop} onClick={view === "main" ? onClose : undefined}>
+    <div style={{ ...backdrop, bottom: bottomOffset }} onClick={view === "main" ? onClose : undefined}>
       <div style={view === "main" ? cardMain : cardDoc} onClick={(e) => e.stopPropagation()}>
         {view === "main" && <MainView isMuted={isMuted} onToggleMute={onToggleMute} onClose={onClose} onNav={setView} />}
         {view === "privacy" && <DocView title="개인정보처리방침" onBack={() => setView("main")}><PrivacyContent /></DocView>}

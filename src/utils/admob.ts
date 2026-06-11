@@ -81,7 +81,7 @@ export async function removeAdBanner(): Promise<void> {
  * 웹 환경에서는 항상 true 반환 (테스트 편의).
  */
 export async function showRewardedAd(): Promise<boolean> {
-  if (!Capacitor.isNativePlatform()) return true;
+  if (!Capacitor.isNativePlatform()) return false; // 토스/웹에서 비활성화
   await initAdMob();
 
   return new Promise<boolean>((resolve) => {

@@ -13,11 +13,12 @@ import obsMtnRock from "../assets/images/obstacles/obs-mountain-rock.png";
 
 interface Props {
   onClose: () => void;
+  bottomOffset?: number;
 }
 
-export function TipsModal({ onClose }: Props) {
+export function TipsModal({ onClose, bottomOffset = 60 }: Props) {
   return (
-    <div style={backdrop} onClick={onClose}>
+    <div style={{ ...backdrop, bottom: bottomOffset }} onClick={onClose}>
       <div style={card} onClick={(e) => e.stopPropagation()}>
         <div style={headerStyle}>
           <div style={{ fontSize: "2rem", marginBottom: 4 }}>📖</div>

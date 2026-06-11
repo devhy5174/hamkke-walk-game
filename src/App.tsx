@@ -22,6 +22,7 @@ import {
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
 import { audioManager } from "./utils/audio";
 import { showAdBanner, hideAdBanner, showRewardedAd, BannerAdPosition } from "./utils/admob";
+import { isNativeApp, AD_BOTTOM_OFFSET } from "./utils/platform";
 import "./App.css";
 
 function App() {
@@ -62,6 +63,8 @@ function App() {
     moonlightTimeLeft,
     photoMsg,
   } = useGame(canvasRef);
+
+  const isNative = isNativeApp();
 
   const [isMuted, setIsMuted] = useState(audioManager.muted);
   const [photoCaption, setPhotoCaption] = useState(
@@ -158,6 +161,7 @@ function App() {
   const adShownRef = useRef(false);
 
   useEffect(() => {
+    if (!isNative) return; // 토스/웹에서 배너 비활성화
     if (isStarted) {
       if (adShownRef.current) {
         hideAdBanner().catch(() => {});
@@ -169,7 +173,7 @@ function App() {
         showAdBanner(BannerAdPosition.BOTTOM_CENTER).catch(() => {});
       }
     }
-  }, [isStarted]);
+  }, [isStarted, isNative]);
   // ────────────────────────────────────────────────────────────────
 
   return (
@@ -232,7 +236,7 @@ function App() {
         )}
 
         {!isStarted && (
-          <div className="overlay">
+          <div className="overlay" style={{ bottom: AD_BOTTOM_OFFSET }}>
             <div className="start-card">
               <h1 className="game-title">산책길 모험</h1>
               <p className="game-desc">
@@ -292,8 +296,8 @@ function App() {
           </div>
         )}
 
-        {/* 광고 슬롯 — 홈화면·팝업 모두에서 하단 고정 표시 */}
-        {!isStarted && (
+        {/* 광고 슬롯 — 네이티브 앱 홈화면에서만 표시 */}
+        {!isStarted && isNative && (
           <div className="ad-banner-slot" style={{ zIndex: 25 }}>
             <span className="ad-banner-slot-label">광고</span>
           </div>
@@ -519,8 +523,8 @@ function App() {
                 {distanceMeters}m · {score.toLocaleString()}점
               </div>
 
-              {/* 부활 버튼 — 판당 1회 */}
-              {!reviveUsed && (
+              {/* 부활 버튼 — 네이티브 앱 + 판당 1회 */}
+              {isNative && !reviveUsed && (
                 <button
                   onClick={reviveLoading ? undefined : handleRevive}
                   style={{
@@ -643,9 +647,10 @@ function App() {
           />
         )}
 
-        {showTips && <TipsModal onClose={() => setShowTips(false)} />}
+        {showTips && <TipsModal bottomOffset={AD_BOTTOM_OFFSET} onClose={() => setShowTips(false)} />}
         {showSettings && (
           <SettingsModal
+            bottomOffset={AD_BOTTOM_OFFSET}
             onClose={() => setShowSettings(false)}
             isMuted={isMuted}
             onToggleMute={handleToggleMute}
@@ -653,6 +658,7 @@ function App() {
         )}
         {showCollection && (
           <ThemeCollectionModal
+            bottomOffset={AD_BOTTOM_OFFSET}
             onClose={() => setShowCollection(false)}
             onPractice={(theme) => {
               setShowCollection(false);
@@ -664,6 +670,7 @@ function App() {
         {showRecords && <RecordsModal onClose={() => setShowRecords(false)} />}
         {showRanking && (
           <RankingModal
+            bottomOffset={AD_BOTTOM_OFFSET}
             score={score}
             distanceMeters={distanceMeters}
             onClose={() => {
@@ -674,6 +681,7 @@ function App() {
         )}
         {showRankingViewOnly && (
           <RankingModal
+            bottomOffset={AD_BOTTOM_OFFSET}
             viewOnly
             onClose={() => setShowRankingViewOnly(false)}
           />

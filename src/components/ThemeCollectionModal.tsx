@@ -295,11 +295,12 @@ function ThemeDetailPopup({
 interface Props {
   onClose: () => void;
   onPractice?: (theme: GameTheme) => void;
+  bottomOffset?: number;
 }
 
 const PRACTICE_NOTICE_KEY = "hamkke-practice-notified";
 
-export function ThemeCollectionModal({ onClose, onPractice }: Props) {
+export function ThemeCollectionModal({ onClose, onPractice, bottomOffset = 60 }: Props) {
   const unlocked = getUnlockedThemes();
   const count = unlocked.length;
   const allUnlocked = count >= THEMES.length;
@@ -324,7 +325,7 @@ export function ThemeCollectionModal({ onClose, onPractice }: Props) {
 
   return (
     <>
-      <div style={backdrop} onClick={onClose}>
+      <div style={{ ...backdrop, bottom: bottomOffset }} onClick={onClose}>
         <div style={card} onClick={(e) => e.stopPropagation()}>
           <div style={header}>
             <div style={{ fontSize: "2rem", marginBottom: 4 }}>🗺️</div>
