@@ -39,9 +39,9 @@ const wrap: CSSProperties = {
 
 const grid: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 8,
-  justifyItems: 'center',
+  gridTemplateColumns: 'repeat(3, 72px)',
+  gap: 14,
+  justifyContent: 'center',
 };
 
 const itemBtn: CSSProperties = {
