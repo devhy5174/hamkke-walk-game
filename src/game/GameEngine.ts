@@ -1599,16 +1599,11 @@ export class GameEngine {
           const lines = messages[msgIdx];
           ctx.font = "bold 13px sans-serif";
           const padding = 24;
-          const margin = 6;
           const lineH = 18;
-          const boxW = Math.min(
-            Math.max(...lines.map((l) => ctx.measureText(l).width)) + padding,
-            this.canvas.width - margin * 2,
-          );
+          const boxW = Math.max(...lines.map((l) => ctx.measureText(l).width)) + padding;
           const boxH = 10 + lines.length * lineH;
-          const rawBx = cx - boxW / 2;
-          const bx = Math.max(margin, Math.min(rawBx, this.canvas.width - boxW - margin));
-          const textX = bx + boxW / 2;
+          const bx = cx - boxW / 2;
+          const textX = cx;
           const by = y - 46 - rise - (lines.length > 1 ? lineH : 0);
           ctx.fillStyle = "#fff";
           ctx.strokeStyle = "rgba(0,0,0,0.1)";
