@@ -1584,36 +1584,43 @@ export class GameEngine {
       ctx.textAlign = "center";
 
       if (obs.dodgerType === "hiker") {
-        // 등산객: 두 메시지 순차 표시
-        const messages = [
-          "앗! 먼저 가세요~! 🙏",
-          "대나무숲 공기가 참 좋죠~? 🌬️",
+        // 등산객: 두 메시지 순차 표시 (lines 배열로 멀티라인 지원)
+        const messages: string[][] = [
+          ["앗! 먼저 가세요~! 🙏"],
+          ["대나무숲 공기가", "참 좋죠~? 🌬️"],
         ];
-        const msgDur = 1.0; // 메시지당 지속 시간
+        const msgDur = 1.0;
         const msgIdx = Math.floor(elapsed / msgDur);
         if (msgIdx < messages.length) {
           const t = elapsed % msgDur;
           const alpha = t < 0.1 ? t / 0.1 : t > 0.8 ? (1 - t) / 0.2 : 1;
-          const rise = msgIdx * 8; // 두 번째 메시지는 조금 더 올라감
+          const rise = msgIdx * 8;
           ctx.globalAlpha = Math.max(0, alpha);
-          const text = messages[msgIdx];
+          const lines = messages[msgIdx];
           ctx.font = "bold 13px sans-serif";
-          const boxW = ctx.measureText(text).width + 36;
+          const padding = 24;
           const margin = 6;
-          // 등산객이 가장자리로 피할 때 말풍선이 캔버스 밖으로 나가지 않도록 클램핑
+          const lineH = 18;
+          const boxW = Math.min(
+            Math.max(...lines.map((l) => ctx.measureText(l).width)) + padding,
+            this.canvas.width - margin * 2,
+          );
+          const boxH = 10 + lines.length * lineH;
           const rawBx = cx - boxW / 2;
           const bx = Math.max(margin, Math.min(rawBx, this.canvas.width - boxW - margin));
           const textX = bx + boxW / 2;
-          const by = y - 46 - rise;
+          const by = y - 46 - rise - (lines.length > 1 ? lineH : 0);
           ctx.fillStyle = "#fff";
           ctx.strokeStyle = "rgba(0,0,0,0.1)";
           ctx.lineWidth = 1;
           ctx.beginPath();
-          rrect(ctx, bx, by, boxW, 26, 12);
+          rrect(ctx, bx, by, boxW, boxH, 12);
           ctx.fill();
           ctx.stroke();
           ctx.fillStyle = "#2D7D52";
-          ctx.fillText(text, textX, by + 17);
+          lines.forEach((line, li) => {
+            ctx.fillText(line, textX, by + 17 + li * lineH);
+          });
         }
       } else if (elapsed < 0.8) {
         // 다람쥐: "!" 표시
