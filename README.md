@@ -136,12 +136,21 @@
 - 기본 조작 / 아이템 / 파워워커 / 특별한 이웃들 / 장애물(실제 이미지) / 테마 구간 안내
 - 히든 테마 도전 배너 (동기부여)
 
+### 광고 시스템 (Android)
+
+- **하단 배너 광고** — 홈화면·팝업에서 항상 표시, 게임 중 완전 제거 (네이티브 뷰 compositing 부담 없음)
+- **보상형 광고 (부활)** — 게임 판당 1회 제공, 광고 시청 완료 후 3초 카운트다운 + 3초 무적으로 부활
+  - 광고 로딩 중 화면 이탈 시 광고 자체를 띄우지 않음
+  - 결과 확인·재시작 시 부활 플로우 즉시 취소
+- **플랫폼 분기** — 토스 미니앱에서는 광고 전체 비활성화, UI 여백 자동 제거
+- `src/utils/admob.ts` — `IS_TEST` 플래그 한 줄로 테스트 ↔ 실제 광고 전환
+
 ### 기록 & 랭킹
 
 - **전체 랭킹** — Firebase Realtime Database, 상위 50위
 - **점수순 / 거리순 탭** 분리 — 각각 독립 갱신 (점수 신기록이면 점수만, 거리 신기록이면 거리만 업데이트)
 - 닉네임 기기 ID 보호 — 같은 닉네임은 동일 기기에서만 업데이트 가능
-- 욕설 필터링, 마지막 닉네임 자동 기억
+- 욕설 필터링 + 초성·모음 단독 입력 차단, 마지막 닉네임 자동 기억
 
 ### 사운드
 
@@ -173,6 +182,7 @@
 | 백엔드     | Firebase Realtime Database                             |
 | 상태관리   | `useState` (UI) / `useRef` + 클래스 내부 (게임 데이터) |
 | 패키징     | `@apps-in-toss/web-framework` (앱인토스 .ait 빌드)     |
+| 광고       | `@capacitor-community/admob` (Android 배너·보상형)     |
 
 ---
 
@@ -216,7 +226,9 @@ src/
 │   ├── ranking.ts                # Firebase 랭킹 upsert·조회
 │   ├── themeCollection.ts        # 도감 해금 상태 저장
 │   ├── deviceId.ts               # 기기 고유 ID 생성
-│   └── profanity.ts              # 욕설 필터
+│   ├── profanity.ts              # 욕설·초성 필터
+│   ├── admob.ts                  # AdMob 배너·보상형 광고 (IS_TEST 플래그)
+│   └── platform.ts               # 플랫폼 감지 (isNativeApp / AD_BOTTOM_OFFSET)
 │
 └── assets/
     ├── images/
@@ -263,10 +275,20 @@ Firebase Realtime Database 규칙:
 
 ```bash
 npm install
-npm run dev          # 개발 서버
-npm run build        # 웹 빌드 (dist/)
-npm run build:ait    # 앱인토스 패키징 (.ait)
-npm run deploy       # 앱인토스 배포
+npm run dev              # 개발 서버
+npm run build            # 웹 빌드 (dist/)
+npm run build:ait        # 앱인토스 패키징 (.ait)
+npm run deploy           # 앱인토스 배포
+npm run build:android    # 웹 빌드 + Capacitor Android sync
+npm run open:android     # Android Studio 열기
+```
+
+### 광고 전환 (AdMob)
+
+```ts
+// src/utils/admob.ts
+export const IS_TEST = true;  // 테스트 광고 (기본값)
+export const IS_TEST = false; // 실제 광고 (Play Store 출시 후)
 ```
 
 ---

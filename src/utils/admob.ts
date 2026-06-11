@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 
 // ─── 광고 ID 설정 ────────────────────────────────────────────────
 // 실제 광고로 전환 시 IS_TEST = false 로 변경
-export const IS_TEST = false;
+export const IS_TEST = true; // Play Store 내부 테스트 트랙 올린 후 false로 변경
 
 const TEST_BANNER_ID   = 'ca-app-pub-3940256099942544/6300978111'; // Google 공식 테스트 배너 ID
 const REAL_BANNER_ID   = 'ca-app-pub-5294050806505689/8251053355';
@@ -77,35 +77,45 @@ export async function removeAdBanner(): Promise<void> {
 
 /**
  * 보상형 광고를 로드 후 표시.
- * 유저가 끝까지 시청하면 true, 중간에 닫으면 false 반환.
- * 웹 환경에서는 항상 true 반환 (테스트 편의).
+ * shouldProceed()가 false를 반환하면 로딩 완료 후에도 광고를 띄우지 않음.
+ * 유저가 끝까지 시청하면 true, 중간에 닫거나 취소되면 false 반환.
  */
-export async function showRewardedAd(): Promise<boolean> {
+export async function showRewardedAd(shouldProceed?: () => boolean): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false; // 토스/웹에서 비활성화
   await initAdMob();
 
   return new Promise<boolean>((resolve) => {
     let rewarded = false;
 
+    const cleanup = async () => {
+      (await onRewarded).remove();
+      (await onDismissed).remove();
+      (await onFailed).remove();
+    };
+
     const onRewarded = AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
       rewarded = true;
     });
     const onDismissed = AdMob.addListener(RewardAdPluginEvents.Dismissed, async () => {
-      (await onRewarded).remove();
-      (await onDismissed).remove();
-      (await onFailed).remove();
+      await cleanup();
       resolve(rewarded);
     });
     const onFailed = AdMob.addListener(RewardAdPluginEvents.FailedToShow, async (err) => {
       console.error('[AdMob] 보상형 광고 표시 실패:', JSON.stringify(err));
-      (await onRewarded).remove();
-      (await onDismissed).remove();
-      (await onFailed).remove();
+      await cleanup();
       resolve(false);
     });
 
     AdMob.prepareRewardVideoAd({ adId: REWARDED_ID, isTesting: IS_TEST })
-      .then(() => AdMob.showRewardVideoAd())
+      .then(async () => {
+        // 로딩 완료 시점에 이탈 여부 재확인 — 이탈했으면 광고 자체를 띄우지 않음
+        if (shouldProceed && !shouldProceed()) {
+          await cleanup();
+          resolve(false);
+          return;
+        }
+        return AdMob.showRewardVideoAd();
+      })
       .catch(async (e) => {
         console.error('[AdMob] 보상형 광고 로드 실패:', e);
         (await onRewarded).remove();

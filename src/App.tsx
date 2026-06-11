@@ -21,7 +21,7 @@ import {
 } from "./components/PracticeThemeBanner";
 import { CHARACTERS, getSavedCharId, saveCharId } from "./game/characters";
 import { audioManager } from "./utils/audio";
-import { showAdBanner, hideAdBanner, showRewardedAd, BannerAdPosition } from "./utils/admob";
+import { showAdBanner, removeAdBanner, showRewardedAd, BannerAdPosition } from "./utils/admob";
 import { isNativeApp, AD_BOTTOM_OFFSET } from "./utils/platform";
 import "./App.css";
 
@@ -92,6 +92,7 @@ function App() {
   const [reviveUsed, setReviveUsed] = useState(false);
   const [reviveLoading, setReviveLoading] = useState(false);
   const [reviveCountdown, setReviveCountdown] = useState<number | null>(null);
+  const reviveValidRef = useRef(false); // 부활 플로우 유효 여부 — 화면 이탈 시 false
 
   const selectedChar =
     CHARACTERS.find((c) => c.id === selectedCharId) ?? CHARACTERS[0];
@@ -122,27 +123,38 @@ function App() {
     saveCharId(id);
   };
 
+  const cancelRevive = () => {
+    reviveValidRef.current = false;
+    setReviveLoading(false);
+    setReviveCountdown(null);
+  };
+
   const handleStart = () => {
+    cancelRevive();
     setReviveUsed(false);
     startGame(selectedChar.src);
   };
 
   const handleRestart = () => {
+    cancelRevive();
     setReviveUsed(false);
     startGame(selectedChar.src);
   };
 
   const handleRevive = async () => {
+    reviveValidRef.current = true;
     setReviveLoading(true);
-    const rewarded = await showRewardedAd();
+    const rewarded = await showRewardedAd(() => reviveValidRef.current);
     setReviveLoading(false);
-    if (!rewarded) return;
+
+    // 광고 시청 중 메인으로 이동했으면 부활 취소
+    if (!rewarded || !reviveValidRef.current) return;
 
     setReviveUsed(true);
-    // 카운트다운 후 부활
     let n = 3;
     setReviveCountdown(n);
     const step = () => {
+      if (!reviveValidRef.current) return; // 카운트다운 중 이탈해도 취소
       n -= 1;
       if (n > 0) {
         setReviveCountdown(n);
@@ -164,7 +176,7 @@ function App() {
     if (!isNative) return; // 토스/웹에서 배너 비활성화
     if (isStarted) {
       if (adShownRef.current) {
-        hideAdBanner().catch(() => {});
+        removeAdBanner().catch(() => {}); // 네이티브 뷰 완전 제거 — hide는 레이어 남아서 렌더링 부담
         adShownRef.current = false;
       }
     } else {
@@ -549,7 +561,7 @@ function App() {
               )}
 
               <button
-                onClick={showResult}
+                onClick={() => { cancelRevive(); showResult(); }}
                 style={{
                   width: "100%",
                   padding: "11px 0",
