@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 
 // ─── 광고 ID 설정 ────────────────────────────────────────────────
 // 실제 광고로 전환 시 IS_TEST = false 로 변경
-export const IS_TEST = true; // Play Store 내부 테스트 트랙 올린 후 false로 변경
+export const IS_TEST = false;
 
 const TEST_BANNER_ID   = 'ca-app-pub-3940256099942544/6300978111'; // Google 공식 테스트 배너 ID
 const REAL_BANNER_ID   = 'ca-app-pub-5294050806505689/8251053355';
